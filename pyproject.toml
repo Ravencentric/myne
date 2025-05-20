@@ -1,0 +1,92 @@
+[project]
+name = "myne"
+description = "Parser for manga and light novel filenames."
+authors = [{ name = "Ravencentric", email = "me@ravencentric.cc" }]
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+requires-python = ">=3.9"
+keywords = ["manga", "parser"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Typing :: Typed",
+]
+dependencies = []
+dynamic = ["version"] # Sourced from Cargo.toml
+
+[project.scripts]
+myne = "myne.myne:script"
+
+[project.urls]
+Repository = "https://github.com/Ravencentric/myne"
+
+[dependency-groups]
+test = ["pytest>=8.3.5"]
+lint = ["mypy>=1.15.0", "ruff>=0.11.8"]
+docs = [
+    "mkdocs-autorefs>=1.4.1",
+    "mkdocs-material>=9.6.12",
+    "mkdocstrings[python]>=0.29.1",
+]
+dev = [
+    "maturin>=1.8.6",
+    "nox>=2025.5.1",
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+
+[tool.uv]
+cache-keys = [{ file = "Cargo.toml" }, { file = "src/**/*.rs" }]
+
+[tool.ruff.lint]
+extend-select = ["I", "RUF", "UP", "N", "D4", "PYI", "ANN"]
+ignore = ["PYI021"]
+fixable = ["ALL"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.mypy]
+strict = true
+pretty = true
+enable_error_code = ["ignore-without-code"]
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "-v"]
+filterwarnings = ["error"]
+log_cli_level = "INFO"
+testpaths = ["tests"]
+
+[tool.cibuildwheel]
+enable = ["pypy", "cpython-freethreading"]
+build-frontend = "build[uv]"
+skip = ["*-manylinux_i686", "*-musllinux_i686", "*-win32"]
+test-groups = ["test"]
+test-command = "pytest {package}/tests"
+
+[tool.cibuildwheel.linux]
+before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y"
+environment = { PATH = "$HOME/.cargo/bin:$PATH" }
+
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.macos]
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+
+[build-system]
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
