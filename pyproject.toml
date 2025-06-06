@@ -27,6 +27,7 @@ myne = "myne.myne:script"
 
 [project.urls]
 Repository = "https://github.com/Ravencentric/myne"
+Documentation = "https://ravencentric.cc/myne/"
 
 [dependency-groups]
 test = ["pytest>=8.3.5"]
