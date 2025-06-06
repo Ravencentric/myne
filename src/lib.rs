@@ -201,36 +201,47 @@ impl Book {
     }
 
     fn __repr__(&self) -> String {
-        format!(
-            "Book(\
-            title={}, \
-            digital={}, \
-            edited={}, \
-            compilation={}, \
-            pre={}, \
-            revision={}, \
-            volume={}, \
-            chapter={}, \
-            group={}, \
-            year={}, \
-            edition={}, \
-            extension={}, \
-            publisher={}\
-            )",
-            self.title.__repr__(),
-            self.digital.__repr__(),
-            self.edited.__repr__(),
-            self.compilation.__repr__(),
-            self.pre.__repr__(),
-            self.revision.__repr__(),
-            self.volume.__repr__(),
-            self.chapter.__repr__(),
-            self.group.__repr__(),
-            self.year.__repr__(),
-            self.edition.__repr__(),
-            self.extension.__repr__(),
-            self.publisher.__repr__(),
-        )
+        let mut parts = Vec::new();
+        parts.push(format!("title={}", self.title.__repr__()));
+
+        if self.digital {
+            parts.push(format!("digital={}", self.digital.__repr__()));
+        }
+        if self.edited {
+            parts.push(format!("edited={}", self.edited.__repr__()));
+        }
+        if self.compilation {
+            parts.push(format!("compilation={}", self.compilation.__repr__()));
+        }
+        if self.pre {
+            parts.push(format!("pre={}", self.pre.__repr__()));
+        }
+        if self.revision != 1 {
+            parts.push(format!("revision={}", self.revision.__repr__()));
+        }
+        if let Some(ref volume) = self.volume {
+            parts.push(format!("volume={}", volume.__repr__()));
+        }
+        if let Some(ref chapter) = self.chapter {
+            parts.push(format!("chapter={}", chapter.__repr__()));
+        }
+        if let Some(ref group) = self.group {
+            parts.push(format!("group={}", group.__repr__()));
+        }
+        if let Some(ref year) = self.year {
+            parts.push(format!("year={}", year.__repr__()));
+        }
+        if let Some(ref edition) = self.edition {
+            parts.push(format!("edition={}", edition.__repr__()));
+        }
+        if let Some(ref extension) = self.extension {
+            parts.push(format!("extension={}", extension.__repr__()));
+        }
+        if let Some(ref publisher) = self.publisher {
+            parts.push(format!("publisher={}", publisher.__repr__()));
+        }
+
+        format!("Book({})", parts.join(", "))
     }
 
     fn __str__(&self) -> String {
