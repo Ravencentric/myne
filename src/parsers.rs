@@ -341,6 +341,9 @@ pub(crate) fn cleanup(s: &str) -> String {
     // Remove any and all terms in brackets.
     let s = regex_replace_all!(r#"[\{\[\(]([^\{\[\(\)\]\}]*)[ \)\]\}]"#i, &s, "");
 
+    // Remove left over keywords that are certainly not part of the title.
+    let s = regex_replace_all!(r#"\s*complete\s*$"#i, &s, "");
+
     // Some releases use the `|` or `/` character to seperate *multiple* titles
     // We only need one title, so we'll just go with the first one.
     // Examples:

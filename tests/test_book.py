@@ -813,9 +813,18 @@ from myne import Book
                 extension=None,
             ),
         ),
+        (
+            "Black_Summoner_Volume_20_Complete.epub",
+            Book(
+                title="Black Summoner",
+                volume="20",
+                extension="epub",
+            ),
+        ),
     ],
 )
 def test_book(filename: str, expected: Book) -> None:
     book = Book.parse(filename)
+    assert book == expected
     assert book.to_json() == expected.to_json()
-    assert eval(repr(book)) == book
+    assert eval(repr(book)) == book == expected

@@ -75,7 +75,7 @@ impl Book {
         // successfully extracted in subsequent steps, their raw matched strings
         // will be removed from this `leftover` string, simplifying it
         // and eventually leaving behind the title.
-        let mut leftover = filename.trim().to_string();
+        let mut leftover = filename.trim().replace('_', " ");
 
         // First, separate the file extension from the main part of the name (the stem).
         let mut extension: Option<String> = None;
