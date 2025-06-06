@@ -162,11 +162,11 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
     // Second regex attempts to match alternate spellings like "Vol. 1", "Volume 02", "Vol 26".
     // Regex breakdown:
     // `Vol(?:ume)?` - Matches "Vol" or "Volume".
-    // `[\.\s]+` - Matches one or more periods or whitespace characters.
+    // `(?:[\.\s]+)?` - Matches one or more periods or whitespace characters.
     // Group 1: `(\d+)` - Matches the volume number.
     // The function uses the full match (Group 0) for `raw` and Group 1 for `vol`.
-    // https://regex101.com/r/sFwpwu/1
-    } else if let Some((raw, vol)) = regex_captures!(r#"Vol(?:ume)?[\.\s]+(\d+)"#i, &s) {
+    // https://regex101.com/r/HUAeaX/1
+    } else if let Some((raw, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
         let vol = vol.trim_start_matches("0");
         let parsed = if vol.is_empty() {
             // If the trimmed start is empty (meaning the original captured 'start'
@@ -427,6 +427,7 @@ mod tests {
     #[case("Three Cheats from Three Goddesses: The Broke Baron’s Youngest Wants a Relaxing Life - Volume 01 [J-Novel Club]", Some(Match { parsed: "1".to_string(), raw: "Volume 01" }))]
     #[case("Veil - Vol 1 [We Need More Yankiis]", Some(Match { parsed: "1".to_string(), raw: "Vol 1" }))]
     #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", Some(Match { parsed: "26".to_string(), raw: "Vol.26" }))]
+    #[case("fireforce_vol32.pdf", Some(Match { parsed: "32".to_string(), raw: "vol32" }))]
     fn test_extract_volume(#[case] input: &str, #[case] expected: Option<Match<String>>) {
         assert_eq!(extract_volume(input), expected);
     }
