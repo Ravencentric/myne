@@ -235,30 +235,34 @@ pub(crate) fn extract_year(s: &str) -> Option<Match<'_, u16>> {
     }
 }
 
-/// Extracts the revision marker (e.g., "(F)", "[f1]").
+/// Extracts the revision marker (e.g., "(F)", "[f1]", "{r2}").
 pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
-    // The original release *without* any (f...) tag is considered revision 1.
-    // The (f...) tag indicates subsequent revisions or "fixes" built upon revision 1.
+    // The original release *without* any (f...) or (r...) tag is considered revision 1.
+    // The (f...) or (r...) tag indicates subsequent revisions or "fixes" built upon revision 1.
     //
-    // The revision is calculated based on the presence and value of the digit following 'f':
-    // - If no digit is present (e.g., "(f)"), this represents the
+    // The revision is calculated based on the presence and value of the digit following 'f' or 'r':
+    // - If no digit is present (e.g., "(f)", "[r]"), this represents the
     //   *first* revision after the original v1, hence it is revision 2.
-    // - If a digit N is present (e.g., "(f1)", "[f2]", "{f3}"), this represents
-    //   the Nth iteration *after* the initial "(f)" (v2). Therefore, the revision is N + 2.
+    // - If a digit N is present (e.g., "(f1)", "[r2]", "{F3}"), this represents
+    //   the Nth iteration *after* the initial "(f)" or "(r)" (v2). Therefore, the revision is N + 2.
     //
     // Examples:
-    // (string without (f...) tag) -> None (Caller interprets as Revision 1)
+    // (string without (f...) or (r...) tag) -> None (Caller should interpret it as Revision 1)
     // "(f)"   -> 2 (The first revision after v1)
     // "[f1]"  -> 3 (parsed 1 + 2)
     // "{f2}"  -> 4 (parsed 2 + 2)
     // "(F3)"  -> 5 (parsed 3 + 2)
-    if let Some((raw, _, revision, _)) = regex_captures!(r#"(\(|\[|\{)\s*f(\d)?\s*(\}|\]|\))"#i, s)
+    // "(r)"   -> 2 (The first revision after v1)
+    // "[r1]"  -> 3 (parsed 1 + 2)
+    // "{r2}"  -> 4 (parsed 2 + 2)
+    // "(R3)"  -> 5 (parsed 3 + 2)
+    if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s)
     {
         let rev: u8 = if revision.is_empty() {
-            // Case: "(f)", "[f]", "{f}" - no digit. This is the 2nd overall revision.
+            // Case: "(f)", "[f]", "{f}", "(r)", "[r]", "{r}" - no digit. This is the 2nd overall revision.
             2
         } else {
-            // Case: "(fN)", "[fN]", "{fN}" - digit N is present. This is the (N + 2)th overall revision.
+            // Case: "(fN)", "[fN]", "{fN}", "(rN)", "[rN]", "{rN}" - digit N is present. This is the (N + 2)th overall revision.
 
             // UNWRAP SAFETY: The regex `(\d)?` guarantees that if revision is not empty, it contains exactly
             // one digit. Therefore, parse::<u8>() is guaranteed to succeed for valid inputs
@@ -461,6 +465,7 @@ mod tests {
     #[rstest]
     #[case("One-Punch Man 193 (2024) (Digital) (Rillant) (f).cbz", Some(Match { parsed: 2, raw: "(f)" }))]
     #[case("One-Punch Man 193 (2024) (Digital) (Rillant) {f2}.cbz", Some(Match { parsed: 4, raw: "{f2}" }))]
+    #[case("The Beginning After the End, Vol. 11 [PZG] {r2}.m4b", Some(Match { parsed: 4, raw: "{r2}" }))]
     #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", None)]
     fn test_extract_revision(#[case] input: &str, #[case] expected: Option<Match<u8>>) {
         assert_eq!(extract_revision(input), expected);
