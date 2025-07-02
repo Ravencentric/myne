@@ -256,6 +256,8 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "[r1]"  -> 3 (parsed 1 + 2)
     // "{r2}"  -> 4 (parsed 2 + 2)
     // "(R3)"  -> 5 (parsed 3 + 2)
+    //
+    // https://regex101.com/r/wGrQmh/1
     if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s)
     {
         let rev = revision.parse::<u8>().map_or(
