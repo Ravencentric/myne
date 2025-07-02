@@ -349,10 +349,14 @@ pub(crate) fn cleanup(s: &str) -> String {
     // - "Attack on Titan/Shingeki no Kyojin v26 (2018) (digital-SD) [Kodansha]"
     let s = regex_replace_all!(r#"[\|\/].*"#, &s, "");
 
+    // Remove any leading or trailing non-word characters, except for `?` and `!`.
+    let s = regex_replace_all!(r#"^[^\w?!]+|[^\w?!]+$"#, &s, "");
+
     // Collapse multiple spaces with a single space
     let s = regex_replace_all!(r#"\s+"#, &s, " ");
 
-    s.trim().trim_matches('-').trim().to_string()
+    s.trim().to_owned()
+
 }
 
 #[cfg(test)]
@@ -493,6 +497,7 @@ mod tests {
     #[rstest]
     #[case("Tekkonkinkreet - (Black & White 30th Anniversary Edition) (2023) (Digital) (1r0n)", "Tekkonkinkreet".to_string())]
     #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", "Youjo Senki".to_string())]
+    #[case("The Beginning After the End,", "The Beginning After the End".to_string())]
     fn test_cleanup(#[case] input: &str, #[case] expected: String) {
         assert_eq!(cleanup(input), expected);
     }
