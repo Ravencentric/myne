@@ -252,7 +252,7 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "[f1]"  -> 3 (parsed 1 + 2)
     // "{f2}"  -> 4 (parsed 2 + 2)
     // "(F3)"  -> 5 (parsed 3 + 2)
-    if let Some((raw, _, revision, _)) = regex_captures!(r#"(\(|\[|\{)\s*f(\d)?\s*(\}|\]|\))"#i, s)
+    if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s)
     {
         let rev: u8 = if revision.is_empty() {
             // Case: "(f)", "[f]", "{f}" - no digit. This is the 2nd overall revision.
@@ -461,6 +461,7 @@ mod tests {
     #[rstest]
     #[case("One-Punch Man 193 (2024) (Digital) (Rillant) (f).cbz", Some(Match { parsed: 2, raw: "(f)" }))]
     #[case("One-Punch Man 193 (2024) (Digital) (Rillant) {f2}.cbz", Some(Match { parsed: 4, raw: "{f2}" }))]
+    #[case("The Beginning After the End, Vol. 11 [PZG] {r2}.m4b", Some(Match { parsed: 4, raw: "{r2}" }))]
     #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", None)]
     fn test_extract_revision(#[case] input: &str, #[case] expected: Option<Match<u8>>) {
         assert_eq!(extract_revision(input), expected);
