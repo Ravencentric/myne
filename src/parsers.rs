@@ -258,18 +258,10 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "(R3)"  -> 5 (parsed 3 + 2)
     if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s)
     {
-        let rev: u8 = if revision.is_empty() {
-            // Case: "(f)", "[f]", "{f}", "(r)", "[r]", "{r}" - no digit. This is the 2nd overall revision.
-            2
-        } else {
-            // Case: "(fN)", "[fN]", "{fN}", "(rN)", "[rN]", "{rN}" - digit N is present. This is the (N + 2)th overall revision.
-
-            // UNWRAP SAFETY: The regex `(\d)?` guarantees that if revision is not empty, it contains exactly
-            // one digit. Therefore, parse::<u8>() is guaranteed to succeed for valid inputs
-            // matching the regex, making the unwrap safe from parse errors.
-            let n = revision.parse::<u8>().unwrap();
-            n + 2
-        };
+        let rev = revision.parse::<u8>().map_or(
+            2, // If no digit present, this is the 2nd overall revision.
+            |n| n + 2, // If digit N present, this is the (N + 2)th overall revision.
+        );
         Some(Match { parsed: rev, raw })
     } else {
         None
