@@ -234,17 +234,14 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
 
 /// Extracts the year or year range, returning only the start year in the parsed field.
 pub(crate) fn extract_year(s: &str) -> Option<Match<'_, u16>> {
-    if let Some((raw, _, start_year, _, _)) =
-        regex_captures!(r#"(\(|\[|\{)\s*(\d{4})(-\d{4})?\s*(\}|\]|\))"#i, s)
-    {
-        // UNWRAP SAFETY: unwrap is infallible here,
-        // because the regex captures exactly 4 digits
-        // which will always be within u16.
-        let year = start_year.parse::<u16>().unwrap();
-        Some(Match { parsed: year, raw })
-    } else {
-        None
-    }
+    regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(
+        |(raw, start_year, _)| {
+            start_year
+                .parse::<u16>()
+                .ok()
+                .map(|year| Match { parsed: year, raw })
+        },
+    )
 }
 
 /// Extracts the revision marker (e.g., "(F)", "[f1]", "{r2}").
@@ -269,16 +266,14 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "{r2}"  -> 4 (parsed 2 + 2)
     // "(R3)"  -> 5 (parsed 3 + 2)
     //
-    // https://regex101.com/r/wGrQmh/1
-    if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s) {
-        let rev = revision.parse::<u8>().map_or(
+    // https://regex101.com/r/nUDWTT/1
+    regex_captures!(r#"[{(\[]\s*(?:f|r)(\d)?\s*[\])}]"#i, s).map(|(raw, revision)| {
+        let parsed = revision.parse::<u8>().map_or(
             2,         // If no digit present, this is the 2nd overall revision.
             |n| n + 2, // If digit N present, this is the (N + 2)th overall revision.
         );
-        Some(Match { parsed: rev, raw })
-    } else {
-        None
-    }
+        Match { parsed, raw }
+    })
 }
 
 /// Extracts the edition
@@ -288,9 +283,8 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
     // Example:
     // Foobar (2024) (Omnibus Edition) (Digital) (1r0n).cbz
     // |-> "Omnibus Edition"
-    // https://regex101.com/r/VYmT3A/1
-    if let Some((raw, edition)) = regex_captures!(r#"[\{\[\(]([\w\s'&]*?Edition.*?)[\)\]\}]"#i, s)
-    {
+    // https://regex101.com/r/jUz7sw/1
+    if let Some((raw, edition)) = regex_captures!(r#"[{(\[]([\w\s'&]*?Edition.*?)[\])}]"#i, s) {
         return Some(Match {
             parsed: edition.trim(),
             raw,
@@ -306,7 +300,7 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
     // "Tekkonkinkreet - Black & White 30th Anniversary Edition (2023) (Digital) (1r0n)"
     // |-> "Black & White 30th Anniversary Edition"
     //
-    // https://regex101.com/r/YXixDi/1
+    // https://regex101.com/r/umuEcH/1
     if let Some((raw, edition)) = regex_captures!(r#"([\w\s'&]*?Edition)"#i, s) {
         return Some(Match {
             parsed: edition.trim(),
@@ -320,8 +314,8 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
     // "The Hero-Killing Bride - Volume 02 [J-Novel Club] [Premium].epub"
     // |-> "Premium"
     //
-    // https://regex101.com/r/XzruAL/1
-    if let Some((raw, edition)) = regex_captures!(r#"[\{\[\(](Premium)[\)\]\}]"#i, s) {
+    // https://regex101.com/r/AsSbFZ/1
+    if let Some((raw, edition)) = regex_captures!(r#"[{(\[](Premium)[\])}]"#i, s) {
         return Some(Match {
             parsed: edition.trim(),
             raw,
