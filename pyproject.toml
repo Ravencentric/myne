@@ -78,13 +78,6 @@ test-command = "pytest {package}/tests"
 before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y"
 environment = { PATH = "$HOME/.cargo/bin:$PATH" }
 
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-pypy_x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-manylinux-ppc64le-image = "manylinux_2_28"
-manylinux-s390x-image = "manylinux_2_28"
-manylinux-pypy_aarch64-image = "manylinux_2_28"
-
 [tool.cibuildwheel.macos]
 environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
