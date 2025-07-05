@@ -149,7 +149,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
     // Group 5: `(\d+(\.\d+)?)` - Matches the second volume number in a range (e.g., "02", "02.25", "04.24").
     // Group 6: `(\.\d+)?` - Optional decimal part of the second number.
     // The function uses the full match (Group 0) for `raw`, Group 2 for `start`, and Group 5 for `end`.
-    // https://regex101.com/r/X9IJaF/1
+    // https://regex101.com/r/LJJ0H0/1
     if let Some((raw, _, start, _, _, end, _)) =
         regex_captures!(r#"(\d+-\d+\sas\s)?v(\d+(\.\d+)?)(-(\d+(\.\d+)?))?"#i, &s)
     {
@@ -177,7 +177,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
     // `(?:[\.\s]+)?` - Matches one or more periods or whitespace characters.
     // Group 1: `(\d+)` - Matches the volume number.
     // The function uses the full match (Group 0) for `raw` and Group 1 for `vol`.
-    // https://regex101.com/r/HUAeaX/1
+    // https://regex101.com/r/8FsUfE/1
     } else if let Some((raw, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
         let vol = vol.trim_start_matches("0");
         let parsed = if vol.is_empty() {
@@ -204,7 +204,7 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
     // `\s` - Matches the space after the number or range.
     // Group 7: `(-[^\{\[\(\)\]\}]*)?` - Optional chapter title.
     // The function uses the full match (Group 0) for `raw`, Group 2 for `start`, and Group 5 for `end`.
-    // https://regex101.com/r/uzn3Xh/1
+    // https://regex101.com/r/gVNakD/1
     if let Some((raw, _, start, _, _, end, _, _)) = regex_captures!(
         r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?\s(-[^\{\[\(\)\]\}]*)?"#i,
         &s
