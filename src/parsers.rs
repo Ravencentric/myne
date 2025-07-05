@@ -230,14 +230,12 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
 
 /// Extracts the year or year range, returning only the start year in the parsed field.
 pub(crate) fn extract_year(s: &str) -> Option<Match<'_, u16>> {
-    regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(
-        |(raw, start_year, _)| {
-            start_year
-                .parse::<u16>()
-                .ok()
-                .map(|year| Match { parsed: year, raw })
-        },
-    )
+    regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(|(raw, start_year, _)| {
+        start_year
+            .parse::<u16>()
+            .ok()
+            .map(|year| Match { parsed: year, raw })
+    })
 }
 
 /// Extracts the revision marker (e.g., "(F)", "[f1]", "{r2}").
