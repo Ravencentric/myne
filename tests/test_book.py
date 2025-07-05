@@ -289,7 +289,6 @@ from myne import Book
                 year=2022,
                 digital=True,
                 group="AntsyLich",
-                extension=None,
             ),
         ),
         (
@@ -319,7 +318,6 @@ from myne import Book
             Book(
                 title="Youjo Senki",
                 volume="26",
-                extension=None,
             ),
         ),
         (
@@ -327,9 +325,8 @@ from myne import Book
             Book(
                 title="Witch and Mercenary",
                 volume="2",
-                publisher="Seven Seas Entertainment",
+                publisher="Seven Seas Siren",
                 group="Stick",
-                extension=None,
             ),
         ),
         (
@@ -339,7 +336,6 @@ from myne import Book
                 volume="1-2",
                 publisher="Seven Seas Entertainment",
                 group="nao",
-                extension=None,
             ),
         ),
         (
@@ -351,7 +347,6 @@ from myne import Book
                 digital=True,
                 publisher="Seven Seas Entertainment",
                 group="1r0n",
-                extension=None,
             ),
         ),
         (
@@ -360,7 +355,6 @@ from myne import Book
                 title="Totto-Chan: The Little Girl at the Window",
                 publisher="Kodansha",
                 group="Stick",
-                extension=None,
             ),
         ),
         (
@@ -370,7 +364,6 @@ from myne import Book
                 volume="1-8",
                 group="danke-empire",
                 publisher="Kodansha",
-                extension=None,
             ),
         ),
         (
@@ -380,7 +373,6 @@ from myne import Book
                 volume="26",
                 year=2018,
                 publisher="Kodansha",
-                extension=None,
                 group="digital-SD",
             ),
         ),
@@ -390,7 +382,6 @@ from myne import Book
                 title="Spy x Family - Family Portrait",
                 publisher="Viz",
                 group="Bondman",
-                extension=None,
             ),
         ),
         (
@@ -401,7 +392,6 @@ from myne import Book
                 volume="13",
                 group="Colored Council",
                 publisher="Viz",
-                extension=None,
             ),
         ),
         (
@@ -431,7 +421,6 @@ from myne import Book
                 volume="1",
                 publisher="Yen Press",
                 group="Stick",
-                extension=None,
             ),
         ),
         (
@@ -442,7 +431,6 @@ from myne import Book
                 year=2025,
                 digital=True,
                 group="Oak",
-                extension=None,
             ),
         ),
         (
@@ -462,7 +450,6 @@ from myne import Book
                 title="Dandadan",
                 chapter="191",
                 year=2025,
-                extension=None,
             ),
         ),
         (
@@ -474,7 +461,6 @@ from myne import Book
                 compilation=True,
                 publisher="Square Enix",
                 group="DigitalMangaFan",
-                extension=None,
             ),
         ),
         (
@@ -485,7 +471,6 @@ from myne import Book
                 digital=True,
                 compilation=True,
                 group="Oak",
-                extension=None,
             ),
         ),
         (
@@ -497,7 +482,6 @@ from myne import Book
                 digital=True,
                 group="1r0n",
                 pre=True,
-                extension=None,
             ),
         ),
         (
@@ -519,7 +503,6 @@ from myne import Book
                 year=2023,
                 digital=True,
                 group="DigitalMangaFan",
-                extension=None,
             ),
         ),
         (
@@ -530,7 +513,6 @@ from myne import Book
                 year=2023,
                 digital=True,
                 group="DigitalMangaFan",
-                extension=None,
             ),
         ),
         (
@@ -541,7 +523,6 @@ from myne import Book
                 digital=True,
                 compilation=True,
                 group="Oak",
-                extension=None,
             ),
         ),
         (
@@ -552,7 +533,6 @@ from myne import Book
                 digital=True,
                 compilation=True,
                 group="Oak",
-                extension=None,
             ),
         ),
         (
@@ -563,7 +543,6 @@ from myne import Book
                 digital=True,
                 compilation=True,
                 group="Oak",
-                extension=None,
             ),
         ),
         (
@@ -572,7 +551,6 @@ from myne import Book
                 title="The Otome Heroine's Fight for Survival",
                 volume="5",
                 pre=True,
-                extension=None,
             ),
         ),
         (
@@ -581,7 +559,6 @@ from myne import Book
                 title="The Hero and the Sage, Reincarnated and Engaged",
                 volume="4",
                 publisher="J-Novel Club",
-                extension=None,
             ),
         ),
         (
@@ -590,7 +567,6 @@ from myne import Book
                 title="Three Cheats from Three Goddesses: The Broke Baron's Youngest Wants a Relaxing Life",
                 volume="1",
                 publisher="J-Novel Club",
-                extension=None,
             ),
         ),
         (
@@ -599,7 +575,6 @@ from myne import Book
                 title="Veil",
                 volume="1",
                 group="We Need More Yankiis",
-                extension=None,
             ),
         ),
         (
@@ -675,7 +650,6 @@ from myne import Book
                 year=2018,
                 digital=True,
                 group="danke-Empire, DeadMan, SlikkyOak",
-                extension=None,
             ),
         ),
         (
@@ -687,7 +661,6 @@ from myne import Book
                 year=2022,
                 digital=True,
                 group="1r0n",
-                extension=None,
             ),
         ),
         (
@@ -698,7 +671,6 @@ from myne import Book
                 year=2022,
                 digital=True,
                 group="danke-Empire, Kaos, Rillant",
-                extension=None,
             ),
         ),
         (
@@ -709,7 +681,6 @@ from myne import Book
                 year=2021,
                 digital=True,
                 group="1r0n",
-                extension=None,
             ),
         ),
         (
@@ -754,7 +725,6 @@ from myne import Book
                 edition="Revamped Edition",
                 volume="1",
                 group="Zatch Bell Makai Scanlations",
-                extension=None,
             ),
         ),
         (
@@ -766,7 +736,6 @@ from myne import Book
                 year=2023,
                 digital=True,
                 group="LuCaZ",
-                extension=None,
             ),
         ),
         (
@@ -777,7 +746,6 @@ from myne import Book
                 year=2020,
                 digital=True,
                 group="XRA-Empire",
-                extension=None,
             ),
         ),
         (
@@ -788,7 +756,6 @@ from myne import Book
                 year=2007,
                 digital=True,
                 group="XRA-Empire",
-                extension=None,
             ),
         ),
         (
@@ -799,7 +766,6 @@ from myne import Book
                 year=2023,
                 digital=True,
                 group="1r0n",
-                extension=None,
             ),
         ),
         (
@@ -810,7 +776,6 @@ from myne import Book
                 year=2023,
                 digital=True,
                 group="1r0n",
-                extension=None,
             ),
         ),
         (
@@ -819,6 +784,16 @@ from myne import Book
                 title="Black Summoner",
                 volume="20",
                 extension="epub",
+            ),
+        ),
+        (
+            "Ishura v07 [Yen Audio] [Stick].m4b",
+            Book(
+                title="Ishura",
+                volume="7",
+                extension="m4b",
+                group="Stick",
+                publisher="Yen Audio",
             ),
         ),
     ],
