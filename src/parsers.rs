@@ -38,7 +38,7 @@ pub(crate) fn extract_extension(s: &str) -> Option<Match<'_, String>> {
 pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
     // Check for Seven Seas pattern with brackets
     if let Some(raw) = regex_find!(
-        r#"(\(|\[|\{)\s*(Seven\sSeas\s*(Siren|Entertainment|Edition)?)\s*(\}|\]|\))"#i,
+        r#"[{(\[]\s*(Seven\sSeas\s*(?:Entertainment|Edition)?)\s*[\])}]"#i,
         s
     ) {
         return Some(Match {
@@ -47,11 +47,16 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
         });
     }
 
+    // Check for Seven Seas Siren (audiobook department) pattern with brackets
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Seven\sSeas\sSiren)\s*[\])}]"#i, s) {
+        return Some(Match {
+            parsed: "Seven Seas Siren",
+            raw,
+        });
+    }
+
     // Check for Kodansha pattern with brackets
-    if let Some(raw) = regex_find!(
-        r#"(\(|\[|\{)\s*(Kodansha\s*(USA|Comics)?)\s*(\}|\]|\))"#i,
-        s
-    ) {
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Kodansha\s*(USA|Comics)?)\s*[\])}]"#i, s) {
         return Some(Match {
             parsed: "Kodansha",
             raw,
@@ -59,12 +64,12 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
     }
 
     // Check for Viz Media pattern with brackets
-    if let Some(raw) = regex_find!(r#"(\(|\[|\{)\s*(Viz\s*(Media)?)\s*(\}|\]|\))"#i, s) {
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Viz\s*(Media)?)\s*[\])}]"#i, s) {
         return Some(Match { parsed: "Viz", raw });
     }
 
     // Check for J-Novel Club pattern with brackets
-    if let Some(raw) = regex_find!(r#"(\(|\[|\{)\s*(J[-\s]Novels?\sClub)\s*(\}|\]|\))"#i, s) {
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(J[-\s]Novels?\sClub)\s*[\])}]"#i, s) {
         return Some(Match {
             parsed: "J-Novel Club",
             raw,
@@ -72,15 +77,23 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
     }
 
     // Check for Yen Press pattern with brackets
-    if let Some(raw) = regex_find!(r#"(\(|\[|\{)\s*(Yen\sPress)\s*(\}|\]|\))"#i, s) {
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Yen\sPress)\s*[\])}]"#i, s) {
         return Some(Match {
             parsed: "Yen Press",
             raw,
         });
     }
 
+    // Check for Yen Audio (audiobook department) pattern with brackets
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Yen\sAudio)\s*[\])}]"#i, s) {
+        return Some(Match {
+            parsed: "Yen Audio",
+            raw,
+        });
+    }
+
     // Check for Square Enix pattern with brackets
-    if let Some(raw) = regex_find!(r#"(\(|\[|\{)\s*(Square\sEnix)\s*(\}|\]|\))"#i, s) {
+    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Square\sEnix)\s*[\])}]"#i, s) {
         return Some(Match {
             parsed: "Square Enix",
             raw,
@@ -104,24 +117,23 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
 
 /// Extracts a "PRE" marker.
 pub(crate) fn extract_pre(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[\(\[\{]\s*PRE\s*[\}\]\)]|PREPUB"#i, s).map(|raw| Match { parsed: true, raw })
+    regex_find!(r#"[{(\[]\s*PRE\s*[\])}]|PREPUB"#i, s).map(|raw| Match { parsed: true, raw })
 }
 
 /// Extracts a "Digital" marker.
 pub(crate) fn extract_digital(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"(\(|\[|\{)\s*(digital)\s*(\}|\]|\))"#i, s)
-        .map(|raw| Match { parsed: true, raw })
+    regex_find!(r#"[{(\[]\s*(digital)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
 }
 
 /// Extracts a "Digital-Compilation" marker.
 pub(crate) fn extract_digital_compilation(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"(\(|\[|\{)\s*(Digital-Compilation)\s*(\}|\]|\))"#i, s)
+    regex_find!(r#"[{(\[]\s*(Digital-Compilation)\s*[\])}]"#i, s)
         .map(|raw| Match { parsed: true, raw })
 }
 
 /// Extracts an "ED" marker.
 pub(crate) fn extract_edited(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"(\(|\[|\{)\s*(ed)\s*(\}|\]|\))"#i, s).map(|raw| Match { parsed: true, raw })
+    regex_find!(r#"[{(\[]\s*(ed)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
 }
 
 /// Extracts the volume number.
@@ -258,10 +270,9 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "(R3)"  -> 5 (parsed 3 + 2)
     //
     // https://regex101.com/r/wGrQmh/1
-    if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s)
-    {
+    if let Some((raw, revision)) = regex_captures!(r#"[\{\[\(]\s*(?:f|r)(\d)?\s*[\)\]\}]"#i, s) {
         let rev = revision.parse::<u8>().map_or(
-            2, // If no digit present, this is the 2nd overall revision.
+            2,         // If no digit present, this is the 2nd overall revision.
             |n| n + 2, // If digit N present, this is the (N + 2)th overall revision.
         );
         Some(Match { parsed: rev, raw })
@@ -356,7 +367,6 @@ pub(crate) fn cleanup(s: &str) -> String {
     let s = regex_replace_all!(r#"\s+"#, &s, " ");
 
     s.trim().to_owned()
-
 }
 
 #[cfg(test)]
@@ -372,7 +382,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Match { parsed: "Seven Seas Entertainment", raw: "[Seven Seas Siren]" }))]
+    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Match { parsed: "Seven Seas Siren", raw: "[Seven Seas Siren]" }))]
     #[case("The Too-Perfect Saint - Tossed Aside by My Fiancé and Sold to Another Kingdom v01-02 [Seven Seas] [nao]	", Some(Match { parsed: "Seven Seas Entertainment", raw: "[Seven Seas]" }))]
     #[case("Hikyouiku kara Nigetai Watashi | I Want to Escape from Princess Lessons v01 (2025) (Digital) (Seven Seas Edition) (1r0n)", Some(Match { parsed: "Seven Seas Entertainment", raw: "(Seven Seas Edition)"}))]
     #[case("Totto-Chan: The Little Girl at the Window [Kodansha USA] [Stick]", Some(Match { parsed: "Kodansha", raw: "[Kodansha USA]" }))]
@@ -383,6 +393,7 @@ mod tests {
     #[case("The Hero-Killing Bride - Volume 02 [J-Novel Club] [Premium].epub", Some(Match { parsed: "J-Novel Club", raw: "[J-Novel Club]"}))]
     #[case("The Hero-Killing Bride - Volume 02 [J Novels Club] [Premium].epub", Some(Match { parsed: "J-Novel Club", raw: "[J Novels Club]"}))]
     #[case("The Summer Hikaru Died v01 [Yen Press] [Stick]", Some(Match { parsed: "Yen Press", raw: "[Yen Press]" }))]
+    #[case("Ishura v07 [Yen Audio] [Stick].m4b", Some(Match { parsed: "Yen Audio", raw: "[Yen Audio]" }))]
     #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", None)]
     fn test_extract_publisher(#[case] input: &str, #[case] expected: Option<Match<&str>>) {
         assert_eq!(extract_publisher(input), expected);
