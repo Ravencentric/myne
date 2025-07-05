@@ -23,14 +23,10 @@ pub(crate) struct Match<'a, T> {
 /// Matches a dot, a letter, and 2-5 word characters at the end of the string,
 /// case-insensitive.
 pub(crate) fn extract_extension(s: &str) -> Option<Match<'_, String>> {
-    if let Some((raw, ext)) = regex_captures!(r#"\.([a-z]\w{2,5})$"#i, s) {
-        Some(Match {
-            parsed: ext.to_lowercase(),
-            raw,
-        })
-    } else {
-        None
-    }
+    regex_captures!(r#"\.([a-z]\w{2,5})$"#i, s).map(|(raw, ext)| Match {
+        parsed: ext.to_lowercase(),
+        raw,
+    })
 }
 
 /// Extracts a known publisher using regex or substring matching, returning
@@ -327,14 +323,12 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
 
 /// Extracts the group name.
 pub(crate) fn extract_group(s: &str) -> Option<Match<'_, &str>> {
-    if let Some((raw, group)) =
-        regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim())
-    {
-        let parsed = group.trim();
-        Some(Match { parsed, raw })
-    } else {
-        None
-    }
+    regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim()).map(|(raw, group)| {
+        Match {
+            parsed: group.trim(),
+            raw,
+        }
+    })
 }
 
 /// Cleanup whatever's left after all the processing.
