@@ -28,4 +28,4 @@ serde_json = "1"
 abi3 = ["pyo3/abi3"]
 
 [dev-dependencies]
-rstest = "0.25.0"
+rstest = "0.26.1"
