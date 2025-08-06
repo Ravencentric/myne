@@ -70,8 +70,8 @@ testpaths = ["tests"]
 
 [tool.cibuildwheel]
 enable = ["pypy", "cpython-freethreading"]
+archs = "auto64"
 build-frontend = "build[uv]"
-skip = ["*-manylinux_i686", "*-musllinux_i686", "*-win32"]
 test-groups = ["test"]
 test-command = "pytest {package}/tests"
 
