@@ -5,7 +5,7 @@ pub(crate) trait PyRepr {
 
 impl PyRepr for String {
     fn __repr__(&self) -> String {
-        format!("'{}'", &self.replace("'", "\\'"))
+        format!("'{}'", &self.replace('\'', "\\'"))
     }
 }
 

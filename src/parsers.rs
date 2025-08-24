@@ -155,19 +155,19 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
         regex_captures!(r#"(\d+-\d+\sas\s)?v(\d+(\.\d+)?)(-(\d+(\.\d+)?))?"#i, &s)
     {
         // Trim leading zeroes
-        let trimmed_start = start.trim_start_matches("0");
-        let trimmed_end = end.trim_start_matches("0");
+        let trimmed_start = start.trim_start_matches('0');
+        let trimmed_end = end.trim_start_matches('0');
         let mut vol = String::new();
-        if !trimmed_start.is_empty() {
+        if trimmed_start.is_empty() {
+            // If the trimmed start is empty (meaning the original captured 'start'
+            // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
+            vol = 0.to_string();
+        } else {
             vol.push_str(trimmed_start);
             if !trimmed_end.is_empty() {
                 vol.push('-');
                 vol.push_str(trimmed_end);
             }
-        } else {
-            // If the trimmed start is empty (meaning the original captured 'start'
-            // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
-            vol = 0.to_string();
         }
 
         return Some(Match { parsed: vol, raw });
@@ -180,7 +180,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
     // The function uses the full match (Group 0) for `raw` and Group 1 for `vol`.
     // https://regex101.com/r/8FsUfE/1
     } else if let Some((raw, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
-        let vol = vol.trim_start_matches("0");
+        let vol = vol.trim_start_matches('0');
         let parsed = if vol.is_empty() {
             // If the trimmed start is empty (meaning the original captured 'start'
             // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
@@ -210,19 +210,19 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
         r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?\s(-[^\{\[\(\)\]\}]*)?"#i,
         &s
     ) {
-        let trimmed_start = start.trim_start_matches("0");
-        let trimmed_end = end.trim_start_matches("0");
+        let trimmed_start = start.trim_start_matches('0');
+        let trimmed_end = end.trim_start_matches('0');
         let mut chapter = String::new();
-        if !trimmed_start.is_empty() {
+        if trimmed_start.is_empty() {
+            // If the trimmed start is empty (meaning the original captured 'start'
+            // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
+            chapter = 0.to_string();
+        } else {
             chapter.push_str(trimmed_start);
             if !trimmed_end.is_empty() {
                 chapter.push('-');
                 chapter.push_str(trimmed_end);
             }
-        } else {
-            // If the trimmed start is empty (meaning the original captured 'start'
-            // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
-            chapter = 0.to_string();
         }
 
         return Some(Match {

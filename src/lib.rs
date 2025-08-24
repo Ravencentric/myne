@@ -92,14 +92,14 @@ impl Book {
         if let Some(Match { parsed, raw }) = parsers::extract_extension(&leftover) {
             extension = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Attempt to extract the publisher information from the stem.
         let mut publisher: Option<String> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_publisher(&leftover) {
             publisher = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // We found a "Scan" marker, which we currently do not track.
         // We solely rely on the absence of a "Digital" marker to imply a scanlation.
@@ -107,7 +107,7 @@ impl Book {
         // other metadata extraction (such as extract_group).
         if let Some(Match { parsed: _, raw }) = parsers::extract_scan(&leftover) {
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Determine the digital and compilation status. This uses a prioritized
         // check: first look for a combined "Digital Compilation" marker, then
@@ -122,63 +122,63 @@ impl Book {
             digital = true;
             compilation = false;
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Check for an "Edited" marker and set the edited flag.
         let mut edited: bool = false;
         if let Some(Match { parsed: _, raw }) = parsers::extract_edited(&leftover) {
             edited = true;
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Check for a "PRE" marker and set the pre flag.
         let mut pre: bool = false;
         if let Some(Match { parsed: _, raw }) = parsers::extract_pre(&leftover) {
             pre = true;
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the revision number, defaulting to 1.
         let mut revision: u8 = 1;
         if let Some(Match { parsed, raw }) = parsers::extract_revision(&leftover) {
             revision = parsed;
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the year from the stem.
         let mut year: Option<u16> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_year(&leftover) {
             year = Some(parsed);
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the edition information (e.g., "Deluxe Edition").
         let mut edition: Option<String> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_edition(&leftover) {
             edition = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the group information.
         let mut group: Option<String> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_group(&leftover) {
             group = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the volume number/string.
         let mut volume: Option<String> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_volume(&leftover) {
             volume = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // Extract the chapter number/string.
         let mut chapter: Option<String> = None;
         if let Some(Match { parsed, raw }) = parsers::extract_chapter(&leftover) {
             chapter = Some(parsed.to_string());
             leftover = leftover.replace(raw, "");
-        };
+        }
 
         // After removing all identified metadata fields from `leftover`, the
         // remaining string represents the title.
