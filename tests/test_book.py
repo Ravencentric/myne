@@ -370,10 +370,10 @@ from myne import Book
             "Attack on Titan/Shingeki no Kyojin v26 (2018) (digital-SD) [Kodansha]",
             Book(
                 title="Attack on Titan",
+                digital=True,
                 volume="26",
                 year=2018,
                 publisher="Kodansha",
-                group="digital-SD",
             ),
         ),
         (
@@ -794,6 +794,22 @@ from myne import Book
                 extension="m4b",
                 group="Stick",
                 publisher="Yen Audio",
+            ),
+        ),
+        (
+            "Alice in the Country of Diamonds - Bet on My Heart - Complete [Seven Seas][Scans_Compressed].pdf",
+            Book(
+                title="Alice in the Country of Diamonds - Bet on My Heart",
+                publisher="Seven Seas Entertainment",
+                extension="pdf",
+            ),
+        ),
+        (
+            "5 Centimeters per Second - One More Side - Complete [Vertical][Scans].pdf",
+            Book(
+                title="5 Centimeters per Second - One More Side",
+                publisher="Vertical",
+                extension="pdf",
             ),
         ),
     ],

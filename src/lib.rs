@@ -75,7 +75,17 @@ impl Book {
         // successfully extracted in subsequent steps, their raw matched strings
         // will be removed from this `leftover` string, simplifying it
         // and eventually leaving behind the title.
-        let mut leftover = filename.trim().replace('_', " ");
+        let mut leftover = {
+            // If the filename contains no whitespace and has multiple underscores,
+            // we can assume underscores are being used as word separators.
+            if !filename.contains(char::is_whitespace)
+                && filename.chars().filter(|&c| c == '_').count() > 1
+            {
+                filename.replace('_', " ")
+            } else {
+                filename.to_owned()
+            }
+        };
 
         // First, separate the file extension from the main part of the name (the stem).
         let mut extension: Option<String> = None;
@@ -91,10 +101,18 @@ impl Book {
             leftover = leftover.replace(raw, "");
         };
 
+        // We found a "Scan" marker, which we currently do not track.
+        // We solely rely on the absence of a "Digital" marker to imply a scanlation.
+        // Remove it from the leftover string to avoid interfering with
+        // other metadata extraction (such as extract_group).
+        if let Some(Match { parsed: _, raw }) = parsers::extract_scan(&leftover) {
+            leftover = leftover.replace(raw, "");
+        };
+
         // Determine the digital and compilation status. This uses a prioritized
         // check: first look for a combined "Digital Compilation" marker, then
         // a simple "Digital" marker.
-        let digital: bool;
+        let mut digital: bool = false;
         let mut compilation: bool = false;
         if let Some(Match { parsed: _, raw }) = parsers::extract_digital_compilation(&leftover) {
             digital = true;
@@ -104,8 +122,6 @@ impl Book {
             digital = true;
             compilation = false;
             leftover = leftover.replace(raw, "");
-        } else {
-            digital = false
         };
 
         // Check for an "Edited" marker and set the edited flag.

@@ -118,7 +118,12 @@ pub(crate) fn extract_pre(s: &str) -> Option<Match<'_, bool>> {
 
 /// Extracts a "Digital" marker.
 pub(crate) fn extract_digital(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(digital)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
+    regex_find!(r#"[{(\[]\s*(digital.*?)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
+}
+
+/// Extracts a "Scan" marker.
+pub(crate) fn extract_scan(s: &str) -> Option<Match<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*(scan.*?)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
 }
 
 /// Extracts a "Digital-Compilation" marker.
@@ -321,12 +326,10 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
 
 /// Extracts the group name.
 pub(crate) fn extract_group(s: &str) -> Option<Match<'_, &str>> {
-    regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim()).map(|(raw, group)| {
-        Match {
-            parsed: group.trim(),
-            raw,
-        }
-    })
+    regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim())
+        .map(|(raw, group)| (raw, group.trim()))
+        .filter(|(_, group)| !group.is_empty())
+        .map(|(raw, group)| Match { parsed: group, raw })
 }
 
 /// Cleanup whatever's left after all the processing.
@@ -387,9 +390,17 @@ mod tests {
 
     #[rstest]
     #[case("Lover Boy v01 (2025) (Digital) (1r0n).cbz", Some(Match { parsed: true, raw: "(Digital)" }))]
+    #[case("Attack on Titan v26 (2018) (digital-SD) [Kodansha].zip", Some(Match { parsed: true, raw: "(digital-SD)" }))]
     #[case("Dandadan 191 (2025)", None)]
     fn test_extract_digital(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
         assert_eq!(extract_digital(input), expected);
+    }
+
+    #[rstest]
+    #[case("5 Centimeters per Second - One More Side - Complete [Vertical][Scans].pdf", Some(Match { parsed: true, raw: "[Scans]" }))]
+    #[case("Alice in the Country of Diamonds - Bet on My Heart - Complete [Seven Seas][Scans_Compressed].pdf", Some(Match { parsed: true, raw: "[Scans_Compressed]" }))]
+    fn test_extract_scan(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
+        assert_eq!(extract_scan(input), expected);
     }
 
     #[rstest]
