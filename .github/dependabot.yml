@@ -17,12 +17,3 @@ updates:
       cargo:
         patterns:
           - "*"
-
-  - package-ecosystem: "rust-toolchain"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    groups:
-      rust-toolchain:
-        patterns:
-          - "*"
