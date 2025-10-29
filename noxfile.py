@@ -14,7 +14,6 @@ PYTHON_VERSIONS = (
     "3.13t",
     "3.14",
     "3.14t",
-    "pypy3.10",
     "pypy3.11",
 )
 
