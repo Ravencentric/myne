@@ -15,9 +15,9 @@ codegen-units = 1
 lto = "fat"
 
 [dependencies]
-clap = { version = "4.6.0", features = ["derive"] }
+clap = { version = "4.6.1", features = ["derive"] }
 lazy-regex = "3.6.0"
-pyo3 = { version = "0.28.2", features = [
+pyo3 = { version = "0.28.3", features = [
     "extension-module",
     "generate-import-lib",
 ] }
