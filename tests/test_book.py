@@ -1,5 +1,11 @@
+import myne
 import pytest
 from myne import Book
+
+
+def test_constants() -> None:
+    assert myne.__all__
+    assert myne.__version__
 
 
 @pytest.mark.parametrize(

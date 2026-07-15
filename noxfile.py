@@ -6,15 +6,12 @@ import nox
 nox.options.default_venv_backend = "uv"
 
 PYTHON_VERSIONS = (
-    "3.9",
     "3.10",
     "3.11",
     "3.12",
     "3.13",
-    "3.13t",
     "3.14",
     "3.14t",
-    "pypy3.11",
 )
 
 

@@ -1,10 +1,10 @@
 """Parser for manga and light novel filenames."""
 
-from typing import final
+from typing import Final, final
 
-__all__ = ("Book", "__version__")
+__all__: Final = ("Book", "__version__")
 
-__version__: str = ...
+__version__: Final[str] = ...
 
 @final
 class Book:

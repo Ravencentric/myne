@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 use parsers::Match;
 use repr::PyRepr;
 
-#[pyclass(module = "myne", frozen, eq, hash, get_all)]
+// TODO: Remove skip_from_py_object once it becomes the default in future
+#[pyclass(module = "myne", frozen, eq, hash, get_all, skip_from_py_object)]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 struct Book {
     title: String,
@@ -296,11 +297,16 @@ fn script() {
 }
 
 /// Parser for manga and light novel filenames.
-#[pymodule(gil_used = false)]
-fn myne(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<Book>()?;
-    m.add_function(wrap_pyfunction!(script, m)?)?;
-    m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add("__all__", ("Book", "__version__"))?;
-    Ok(())
+#[pymodule]
+mod myne {
+    #[pymodule_export]
+    use super::{Book, script};
+
+    #[pymodule_export]
+    #[allow(non_upper_case_globals)]
+    pub const __version__: &'static str = env!("CARGO_PKG_VERSION");
+
+    #[pymodule_export]
+    #[allow(non_upper_case_globals)]
+    pub const __all__: (&'static str, &'static str) = ("Book", "__version__");
 }
