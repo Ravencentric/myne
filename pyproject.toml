@@ -2,21 +2,19 @@
 name = "myne"
 description = "Parser for manga and light novel filenames."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT OR Apache-2.0"
 authors = [{ name = "Ravencentric", email = "me@ravencentric.cc" }]
 keywords = ["manga", "parser"]
 classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: Implementation :: PyPy",
   "Programming Language :: Rust",
   "Typing :: Typed",
 ]
@@ -32,8 +30,7 @@ myne = "myne.myne:script"
 
 [dependency-groups]
 dev = [
-  "maturin>=1.8.6",
-  "nox>=2025.5.1",
+  "nox>=2026",
   { include-group = "docs" },
   { include-group = "lint" },
   { include-group = "test" },
@@ -43,21 +40,22 @@ docs = [
   "mkdocs-material>=9.6.12",
   "mkdocstrings[python]>=0.29.1",
 ]
-lint = ["mypy>=1.15.0", "ruff>=0.11.8"]
-test = ["pytest>=8.3.5"]
+lint = ["mypy>=2", "ruff>=0.15", { include-group = "test" }]
+test = ["pytest>=9"]
 
 [build-system]
-requires = ["maturin>=1.8,<2.0"]
+requires = ["maturin>=1.14,<2.0"]
 build-backend = "maturin"
 
 [tool.cibuildwheel]
-enable = ["pypy", "cpython-freethreading"]
+build = ["cp310-*", "cp3??t-*"]
 archs = "auto64"
 build-frontend = "build[uv]"
 test-groups = ["test"]
 test-command = "pytest {package}/tests"
 
 [tool.cibuildwheel.linux]
+# https://cibuildwheel.pypa.io/en/stable/faq/#building-rust-wheels
 before-all = "curl -sSf https://sh.rustup.rs | sh -s -- -y"
 environment = { PATH = "$HOME/.cargo/bin:$PATH" }
 
@@ -66,16 +64,19 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.maturin]
 editable-profile = "dev"
+locked = true
 
 [tool.mypy]
 strict = true
 pretty = true
+files = ["python/**/*.pyi", "tests/**/*.py"]
 enable_error_code = ["ignore-without-code"]
 
-[tool.pytest.ini_options]
-addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config", "-v"]
+[tool.pytest]
+addopts = ["--showlocals", "-ra", "-v"]
 filterwarnings = ["error"]
 log_cli_level = "INFO"
+strict = true
 testpaths = ["tests"]
 
 [tool.ruff.lint]
@@ -87,4 +88,9 @@ fixable = ["ALL"]
 "tests/*" = ["D"]
 
 [tool.uv]
-cache-keys = [{ file = "Cargo.toml" }, { file = "src/**/*.rs" }]
+cache-keys = [
+  { file = "Cargo.toml" },
+  { file = "pyproject.toml" },
+  { file = "src/**/*.rs" },
+]
+exclude-newer = "1 week"
