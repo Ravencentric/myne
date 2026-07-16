@@ -1,5 +1,6 @@
-import myne
 import pytest
+
+import myne
 from myne import Book
 
 
