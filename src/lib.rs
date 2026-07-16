@@ -304,9 +304,9 @@ mod myne {
 
     #[pymodule_export]
     #[allow(non_upper_case_globals)]
-    pub const __version__: &'static str = env!("CARGO_PKG_VERSION");
+    pub const __version__: &str = env!("CARGO_PKG_VERSION");
 
     #[pymodule_export]
     #[allow(non_upper_case_globals)]
-    pub const __all__: (&'static str, &'static str) = ("Book", "__version__");
+    pub const __all__: (&str, &str) = ("Book", "__version__");
 }
