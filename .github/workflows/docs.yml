@@ -8,7 +8,7 @@ on:
       - 'docs/**'
       - 'myne.pyi'
       - '.github/workflows/docs.yml'
-      - 'mkdocs.yml'
+      - 'zensical.toml'
   workflow_dispatch:
 
 env:

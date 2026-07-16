@@ -52,7 +52,6 @@ def clean(session: nox.Session) -> None:
         "./dist",
         "./tests/__pycache__",
         "./__pycache__",
-        "./python/__pycache__",
         "./.nox",
     )
 

@@ -37,7 +37,7 @@ pip install myne
 
 ## Building from source
 
-Building from source requires the [Rust toolchain](https://rustup.rs/) and [Python 3.9+](https://www.python.org/downloads/).
+Building from source requires the [Rust toolchain](https://rustup.rs/) and [Python 3.10+](https://www.python.org/downloads/).
 
 - With [`uv`](https://docs.astral.sh/uv/):
 
