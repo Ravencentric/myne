@@ -36,9 +36,8 @@ dev = [
   { include-group = "test" },
 ]
 docs = [
-  "mkdocs-autorefs>=1.4.1",
-  "mkdocs-material>=9.6.12",
-  "mkdocstrings[python]>=0.29.1",
+  "mkdocstrings[python]>=1",
+  "zensical>=0.0.48",
 ]
 lint = ["mypy>=2", "ruff>=0.15", { include-group = "test" }]
 test = ["pytest>=9"]
