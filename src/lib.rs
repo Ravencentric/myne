@@ -10,7 +10,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use parsers::Match;
+use parsers::Extract;
 use repr::PyRepr;
 
 // TODO: Remove skip_from_py_object once it becomes the default in future
@@ -90,24 +90,24 @@ impl Book {
 
         // First, separate the file extension from the main part of the name (the stem).
         let mut extension: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_extension(&leftover) {
-            extension = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_extension(&leftover) {
+            extension = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // Attempt to extract the publisher information from the stem.
         let mut publisher: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_publisher(&leftover) {
-            publisher = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_publisher(&leftover) {
+            publisher = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // We found a "Scan" marker, which we currently do not track.
         // We solely rely on the absence of a "Digital" marker to imply a scanlation.
         // Remove it from the leftover string to avoid interfering with
         // other metadata extraction (such as extract_group).
-        if let Some(Match { parsed: _, raw }) = parsers::extract_scan(&leftover) {
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value: _, text }) = parsers::extract_scan(&leftover) {
+            leftover = leftover.replace(text, "");
         }
 
         // Determine the digital and compilation status. This uses a prioritized
@@ -115,70 +115,70 @@ impl Book {
         // a simple "Digital" marker.
         let mut digital: bool = false;
         let mut compilation: bool = false;
-        if let Some(Match { parsed: _, raw }) = parsers::extract_digital_compilation(&leftover) {
+        if let Some(Extract { value: _, text }) = parsers::extract_digital_compilation(&leftover) {
             digital = true;
             compilation = true;
-            leftover = leftover.replace(raw, "");
-        } else if let Some(Match { parsed: _, raw }) = parsers::extract_digital(&leftover) {
+            leftover = leftover.replace(text, "");
+        } else if let Some(Extract { value: _, text }) = parsers::extract_digital(&leftover) {
             digital = true;
             compilation = false;
-            leftover = leftover.replace(raw, "");
+            leftover = leftover.replace(text, "");
         }
 
         // Check for an "Edited" marker and set the edited flag.
         let mut edited: bool = false;
-        if let Some(Match { parsed: _, raw }) = parsers::extract_edited(&leftover) {
+        if let Some(Extract { value: _, text }) = parsers::extract_edited(&leftover) {
             edited = true;
-            leftover = leftover.replace(raw, "");
+            leftover = leftover.replace(text, "");
         }
 
         // Check for a "PRE" marker and set the pre flag.
         let mut pre: bool = false;
-        if let Some(Match { parsed: _, raw }) = parsers::extract_pre(&leftover) {
+        if let Some(Extract { value: _, text }) = parsers::extract_pre(&leftover) {
             pre = true;
-            leftover = leftover.replace(raw, "");
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the revision number, defaulting to 1.
         let mut revision: u8 = 1;
-        if let Some(Match { parsed, raw }) = parsers::extract_revision(&leftover) {
-            revision = parsed;
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_revision(&leftover) {
+            revision = value;
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the year from the stem.
         let mut year: Option<u16> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_year(&leftover) {
-            year = Some(parsed);
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_year(&leftover) {
+            year = Some(value);
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the edition information (e.g., "Deluxe Edition").
         let mut edition: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_edition(&leftover) {
-            edition = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_edition(&leftover) {
+            edition = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the group information.
         let mut group: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_group(&leftover) {
-            group = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_group(&leftover) {
+            group = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the volume number/string.
         let mut volume: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_volume(&leftover) {
-            volume = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_volume(&leftover) {
+            volume = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // Extract the chapter number/string.
         let mut chapter: Option<String> = None;
-        if let Some(Match { parsed, raw }) = parsers::extract_chapter(&leftover) {
-            chapter = Some(parsed.to_string());
-            leftover = leftover.replace(raw, "");
+        if let Some(Extract { value, text }) = parsers::extract_chapter(&leftover) {
+            chapter = Some(value.to_string());
+            leftover = leftover.replace(text, "");
         }
 
         // After removing all identified metadata fields from `leftover`, the

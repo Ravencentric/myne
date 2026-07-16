@@ -3,11 +3,11 @@ use lazy_regex::{regex_captures, regex_find, regex_replace_all};
 
 /// Represents a successfully extracted piece of data.
 #[derive(Debug, PartialEq)]
-pub(crate) struct Match<'a, T> {
+pub(crate) struct Extract<'a, T> {
     /// The parsed or cleaned-up value (e.g., "Seven Seas Entertainment").
-    pub(crate) parsed: T,
+    pub(crate) value: T,
     /// The exact substring from the original string that matched (e.g., "(Seven Seas)").
-    pub(crate) raw: &'a str,
+    pub(crate) text: &'a str,
 }
 
 /// Extracts the extension of a file.
@@ -22,77 +22,79 @@ pub(crate) struct Match<'a, T> {
 ///
 /// Matches a dot, a letter, and 2-5 word characters at the end of the string,
 /// case-insensitive.
-pub(crate) fn extract_extension(s: &str) -> Option<Match<'_, String>> {
-    regex_captures!(r#"\.([a-z]\w{2,5})$"#i, s).map(|(raw, ext)| Match {
-        parsed: ext.to_lowercase(),
-        raw,
+pub(crate) fn extract_extension(s: &str) -> Option<Extract<'_, String>> {
+    regex_captures!(r#"\.([a-z]\w{2,5})$"#i, s).map(|(text, ext)| Extract {
+        value: ext.to_lowercase(),
+        text,
     })
 }
 
-/// Extracts a known publisher using regex or substring matching, returning
-/// both the raw matched string and the parsed string slice.
-pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
+/// Extracts a known publisher using regex or substring matching
+pub(crate) fn extract_publisher(s: &str) -> Option<Extract<'_, &str>> {
     // Check for Seven Seas pattern with brackets
-    if let Some(raw) = regex_find!(
+    if let Some(text) = regex_find!(
         r#"[{(\[]\s*(Seven\sSeas\s*(?:Entertainment|Edition)?)\s*[\])}]"#i,
         s
     ) {
-        return Some(Match {
-            parsed: "Seven Seas Entertainment",
-            raw,
+        return Some(Extract {
+            value: "Seven Seas Entertainment",
+            text,
         });
     }
 
     // Check for Seven Seas Siren (audiobook department) pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Seven\sSeas\sSiren)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "Seven Seas Siren",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Seven\sSeas\sSiren)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Seven Seas Siren",
+            text,
         });
     }
 
     // Check for Kodansha pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Kodansha\s*(USA|Comics)?)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "Kodansha",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Kodansha\s*(USA|Comics)?)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Kodansha",
+            text,
         });
     }
 
     // Check for Viz Media pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Viz\s*(Media)?)\s*[\])}]"#i, s) {
-        return Some(Match { parsed: "Viz", raw });
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Viz\s*(Media)?)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Viz",
+            text,
+        });
     }
 
     // Check for J-Novel Club pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(J[-\s]Novels?\sClub)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "J-Novel Club",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(J[-\s]Novels?\sClub)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "J-Novel Club",
+            text,
         });
     }
 
     // Check for Yen Press pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Yen\sPress)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "Yen Press",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Yen\sPress)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Yen Press",
+            text,
         });
     }
 
     // Check for Yen Audio (audiobook department) pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Yen\sAudio)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "Yen Audio",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Yen\sAudio)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Yen Audio",
+            text,
         });
     }
 
     // Check for Square Enix pattern with brackets
-    if let Some(raw) = regex_find!(r#"[{(\[]\s*(Square\sEnix)\s*[\])}]"#i, s) {
-        return Some(Match {
-            parsed: "Square Enix",
-            raw,
+    if let Some(text) = regex_find!(r#"[{(\[]\s*(Square\sEnix)\s*[\])}]"#i, s) {
+        return Some(Extract {
+            value: "Square Enix",
+            text,
         });
     }
 
@@ -100,9 +102,9 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
     // If the regex patterns failed, iterate through our list of known publisher names.
     for known_publisher in KNOWN_PUBLISHERS {
         if s.contains(known_publisher) {
-            return Some(Match {
-                parsed: known_publisher,
-                raw: known_publisher,
+            return Some(Extract {
+                value: known_publisher,
+                text: known_publisher,
             });
         }
     }
@@ -112,33 +114,47 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Match<'_, &str>> {
 }
 
 /// Extracts a "PRE" marker.
-pub(crate) fn extract_pre(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*PRE\s*[\])}]|PREPUB"#i, s).map(|raw| Match { parsed: true, raw })
+pub(crate) fn extract_pre(s: &str) -> Option<Extract<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*PRE\s*[\])}]|PREPUB"#i, s).map(|text| Extract {
+        value: true,
+        text,
+    })
 }
 
 /// Extracts a "Digital" marker.
-pub(crate) fn extract_digital(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(digital.*?)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
+pub(crate) fn extract_digital(s: &str) -> Option<Extract<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*(digital.*?)\s*[\])}]"#i, s).map(|text| Extract {
+        value: true,
+        text,
+    })
 }
 
 /// Extracts a "Scan" marker.
-pub(crate) fn extract_scan(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(scan.*?)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
+pub(crate) fn extract_scan(s: &str) -> Option<Extract<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*(scan.*?)\s*[\])}]"#i, s).map(|text| Extract {
+        value: true,
+        text,
+    })
 }
 
 /// Extracts a "Digital-Compilation" marker.
-pub(crate) fn extract_digital_compilation(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(Digital-Compilation)\s*[\])}]"#i, s)
-        .map(|raw| Match { parsed: true, raw })
+pub(crate) fn extract_digital_compilation(s: &str) -> Option<Extract<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*(Digital-Compilation)\s*[\])}]"#i, s).map(|text| Extract {
+        value: true,
+        text,
+    })
 }
 
 /// Extracts an "ED" marker.
-pub(crate) fn extract_edited(s: &str) -> Option<Match<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(ed)\s*[\])}]"#i, s).map(|raw| Match { parsed: true, raw })
+pub(crate) fn extract_edited(s: &str) -> Option<Extract<'_, bool>> {
+    regex_find!(r#"[{(\[]\s*(ed)\s*[\])}]"#i, s).map(|text| Extract {
+        value: true,
+        text,
+    })
 }
 
 /// Extracts the volume number.
-pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
+pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
     // First regex attempts to match patterns like "v01", "v12.5", "v01-02",
     // "001-010 as v01-02", "v01.24-04.24".
     // Regex breakdown:
@@ -149,9 +165,9 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
     // Group 4: `(-(\d+(\.\d+)?))?` - Optional range part starting with '-'.
     // Group 5: `(\d+(\.\d+)?)` - Matches the second volume number in a range (e.g., "02", "02.25", "04.24").
     // Group 6: `(\.\d+)?` - Optional decimal part of the second number.
-    // The function uses the full match (Group 0) for `raw`, Group 2 for `start`, and Group 5 for `end`.
+    // The function uses the full match (Group 0) for `text`, Group 2 for `start`, and Group 5 for `end`.
     // https://regex101.com/r/LJJ0H0/1
-    if let Some((raw, _, start, _, _, end, _)) =
+    if let Some((text, _, start, _, _, end, _)) =
         regex_captures!(r#"(\d+-\d+\sas\s)?v(\d+(\.\d+)?)(-(\d+(\.\d+)?))?"#i, &s)
     {
         // Trim leading zeroes
@@ -170,16 +186,19 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
             }
         }
 
-        return Some(Match { parsed: vol, raw });
+        return Some(Extract {
+            value: vol,
+            text,
+        });
 
     // Second regex attempts to match alternate spellings like "Vol. 1", "Volume 02", "Vol 26".
     // Regex breakdown:
     // `Vol(?:ume)?` - Matches "Vol" or "Volume".
     // `(?:[\.\s]+)?` - Matches one or more periods or whitespace characters.
     // Group 1: `(\d+)` - Matches the volume number.
-    // The function uses the full match (Group 0) for `raw` and Group 1 for `vol`.
+    // The function uses the full match (Group 0) for `text` and Group 1 for `vol`.
     // https://regex101.com/r/8FsUfE/1
-    } else if let Some((raw, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
+    } else if let Some((text, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
         let vol = vol.trim_start_matches('0');
         let parsed = if vol.is_empty() {
             // If the trimmed start is empty (meaning the original captured 'start'
@@ -188,13 +207,16 @@ pub(crate) fn extract_volume(s: &str) -> Option<Match<'_, String>> {
         } else {
             vol.to_string()
         };
-        return Some(Match { parsed, raw });
+        return Some(Extract {
+            value: parsed,
+            text,
+        });
     }
     None
 }
 
 /// Extracts the chapter number.
-pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
+pub(crate) fn extract_chapter(s: &str) -> Option<Extract<'_, String>> {
     // Regex breakdown:
     // Group 1: `(\s|\bc|[,\+]\s)` - Matches the required prefix (whitespace, 'c' word boundary, ', ', or '+ ').
     // Group 2: `(\d\d+(\.\d+)?)` - Matches the first chapter number. Requires at least two digits.
@@ -204,9 +226,9 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
     // Group 6: `(\.\d+)?` - Optional decimal part of the second number.
     // `\s` - Matches the space after the number or range.
     // Group 7: `(-[^\{\[\(\)\]\}]*)?` - Optional chapter title.
-    // The function uses the full match (Group 0) for `raw`, Group 2 for `start`, and Group 5 for `end`.
+    // The function uses the full match (Group 0) for `text`, Group 2 for `start`, and Group 5 for `end`.
     // https://regex101.com/r/gVNakD/1
-    if let Some((raw, _, start, _, _, end, _, _)) = regex_captures!(
+    if let Some((text, _, start, _, _, end, _, _)) = regex_captures!(
         r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?\s(-[^\{\[\(\)\]\}]*)?"#i,
         &s
     ) {
@@ -225,26 +247,28 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Match<'_, String>> {
             }
         }
 
-        return Some(Match {
-            parsed: chapter,
-            raw: raw.trim(),
+        return Some(Extract {
+            value: chapter,
+            text: text.trim(),
         });
     }
     None
 }
 
 /// Extracts the year or year range, returning only the start year in the parsed field.
-pub(crate) fn extract_year(s: &str) -> Option<Match<'_, u16>> {
-    regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(|(raw, start_year, _)| {
-        start_year
-            .parse::<u16>()
-            .ok()
-            .map(|year| Match { parsed: year, raw })
-    })
+pub(crate) fn extract_year(s: &str) -> Option<Extract<'_, u16>> {
+    regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(
+        |(text, start_year, _)| {
+            start_year.parse::<u16>().ok().map(|year| Extract {
+                value: year,
+                text,
+            })
+        },
+    )
 }
 
 /// Extracts the revision marker (e.g., "(F)", "[f1]", "{r2}").
-pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
+pub(crate) fn extract_revision(s: &str) -> Option<Extract<'_, u8>> {
     // The original release *without* any (f...) or (r...) tag is considered revision 1.
     // The (f...) or (r...) tag indicates subsequent revisions or "fixes" built upon revision 1.
     //
@@ -266,27 +290,30 @@ pub(crate) fn extract_revision(s: &str) -> Option<Match<'_, u8>> {
     // "(R3)"  -> 5 (parsed 3 + 2)
     //
     // https://regex101.com/r/nUDWTT/1
-    regex_captures!(r#"[{(\[]\s*(?:f|r)(\d)?\s*[\])}]"#i, s).map(|(raw, revision)| {
+    regex_captures!(r#"[{(\[]\s*(?:f|r)(\d)?\s*[\])}]"#i, s).map(|(text, revision)| {
         let parsed = revision.parse::<u8>().map_or(
             2,         // If no digit present, this is the 2nd overall revision.
             |n| n + 2, // If digit N present, this is the (N + 2)th overall revision.
         );
-        Match { parsed, raw }
+        Extract {
+            value: parsed,
+            text,
+        }
     })
 }
 
 /// Extracts the edition
-pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
+pub(crate) fn extract_edition(s: &str) -> Option<Extract<'_, &str>> {
     // First (and simplest) case: finds any text containing "Edition" within any type of bracket.
     //
     // Example:
     // Foobar (2024) (Omnibus Edition) (Digital) (1r0n).cbz
     // |-> "Omnibus Edition"
     // https://regex101.com/r/jUz7sw/1
-    if let Some((raw, edition)) = regex_captures!(r#"[{(\[]([\w\s'&]*?Edition.*?)[\])}]"#i, s) {
-        return Some(Match {
-            parsed: edition.trim(),
-            raw,
+    if let Some((text, edition)) = regex_captures!(r#"[{(\[]([\w\s'&]*?Edition.*?)[\])}]"#i, s) {
+        return Some(Extract {
+            value: edition.trim(),
+            text,
         });
     }
 
@@ -300,10 +327,10 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
     // |-> "Black & White 30th Anniversary Edition"
     //
     // https://regex101.com/r/umuEcH/1
-    if let Some((raw, edition)) = regex_captures!(r#"([\w\s'&]*?Edition)"#i, s) {
-        return Some(Match {
-            parsed: edition.trim(),
-            raw: raw.trim(),
+    if let Some((text, edition)) = regex_captures!(r#"([\w\s'&]*?Edition)"#i, s) {
+        return Some(Extract {
+            value: edition.trim(),
+            text: text.trim(),
         });
     }
 
@@ -314,10 +341,10 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
     // |-> "Premium"
     //
     // https://regex101.com/r/AsSbFZ/1
-    if let Some((raw, edition)) = regex_captures!(r#"[{(\[](Premium)[\])}]"#i, s) {
-        return Some(Match {
-            parsed: edition.trim(),
-            raw,
+    if let Some((text, edition)) = regex_captures!(r#"[{(\[](Premium)[\])}]"#i, s) {
+        return Some(Extract {
+            value: edition.trim(),
+            text,
         });
     }
 
@@ -325,11 +352,14 @@ pub(crate) fn extract_edition(s: &str) -> Option<Match<'_, &str>> {
 }
 
 /// Extracts the group name.
-pub(crate) fn extract_group(s: &str) -> Option<Match<'_, &str>> {
+pub(crate) fn extract_group(s: &str) -> Option<Extract<'_, &str>> {
     regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim())
-        .map(|(raw, group)| (raw, group.trim()))
+        .map(|(text, group)| (text, group.trim()))
         .filter(|(_, group)| !group.is_empty())
-        .map(|(raw, group)| Match { parsed: group, raw })
+        .map(|(text, group)| Extract {
+            value: group,
+            text,
+        })
 }
 
 /// Cleanup whatever's left after all the processing.
@@ -364,141 +394,141 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    #[case("The Eminence in Shadow v01 (2021) (Digital) (1r0n).cbz", Some(Match { parsed: "cbz".to_string(), raw: ".cbz" }))]
+    #[case("The Eminence in Shadow v01 (2021) (Digital) (1r0n).cbz", Some(Extract { value: "cbz".to_string(), text: ".cbz" }))]
     #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", None)]
-    fn test_extract_extension(#[case] input: &str, #[case] expected: Option<Match<String>>) {
+    fn test_extract_extension(#[case] input: &str, #[case] expected: Option<Extract<String>>) {
         assert_eq!(extract_extension(input), expected);
     }
 
     #[rstest]
-    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Match { parsed: "Seven Seas Siren", raw: "[Seven Seas Siren]" }))]
-    #[case("The Too-Perfect Saint - Tossed Aside by My Fiancé and Sold to Another Kingdom v01-02 [Seven Seas] [nao]	", Some(Match { parsed: "Seven Seas Entertainment", raw: "[Seven Seas]" }))]
-    #[case("Hikyouiku kara Nigetai Watashi | I Want to Escape from Princess Lessons v01 (2025) (Digital) (Seven Seas Edition) (1r0n)", Some(Match { parsed: "Seven Seas Entertainment", raw: "(Seven Seas Edition)"}))]
-    #[case("Totto-Chan: The Little Girl at the Window [Kodansha USA] [Stick]", Some(Match { parsed: "Kodansha", raw: "[Kodansha USA]" }))]
-    #[case("That Time I Got Reincarnated as a Slime V01-08 (danke-empire) (Kodansha Comics)	", Some(Match { parsed: "Kodansha", raw: "(Kodansha Comics)" }))]
-    #[case("Attack on Titan/Shingeki no Kyojin v26 (2018) (digital-SD) [Kodansha]", Some(Match { parsed: "Kodansha", raw: "[Kodansha]" }))]
-    #[case("Spy x Family - Family Portrait [VIZ Media] [Bondman]", Some(Match { parsed: "Viz", raw: "[VIZ Media]" }))]
-    #[case("Slam Dunk - New Edition v13 (Colored Council) (Viz)", Some(Match { parsed: "Viz", raw: "(Viz)" }))]
-    #[case("The Hero-Killing Bride - Volume 02 [J-Novel Club] [Premium].epub", Some(Match { parsed: "J-Novel Club", raw: "[J-Novel Club]"}))]
-    #[case("The Hero-Killing Bride - Volume 02 [J Novels Club] [Premium].epub", Some(Match { parsed: "J-Novel Club", raw: "[J Novels Club]"}))]
-    #[case("The Summer Hikaru Died v01 [Yen Press] [Stick]", Some(Match { parsed: "Yen Press", raw: "[Yen Press]" }))]
-    #[case("Ishura v07 [Yen Audio] [Stick].m4b", Some(Match { parsed: "Yen Audio", raw: "[Yen Audio]" }))]
+    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Extract { value: "Seven Seas Siren", text: "[Seven Seas Siren]" }))]
+    #[case("The Too-Perfect Saint - Tossed Aside by My Fiancé and Sold to Another Kingdom v01-02 [Seven Seas] [nao]	", Some(Extract { value: "Seven Seas Entertainment", text: "[Seven Seas]" }))]
+    #[case("Hikyouiku kara Nigetai Watashi | I Want to Escape from Princess Lessons v01 (2025) (Digital) (Seven Seas Edition) (1r0n)", Some(Extract { value: "Seven Seas Entertainment", text: "(Seven Seas Edition)"}))]
+    #[case("Totto-Chan: The Little Girl at the Window [Kodansha USA] [Stick]", Some(Extract { value: "Kodansha", text: "[Kodansha USA]" }))]
+    #[case("That Time I Got Reincarnated as a Slime V01-08 (danke-empire) (Kodansha Comics)	", Some(Extract { value: "Kodansha", text: "(Kodansha Comics)" }))]
+    #[case("Attack on Titan/Shingeki no Kyojin v26 (2018) (digital-SD) [Kodansha]", Some(Extract { value: "Kodansha", text: "[Kodansha]" }))]
+    #[case("Spy x Family - Family Portrait [VIZ Media] [Bondman]", Some(Extract { value: "Viz", text: "[VIZ Media]" }))]
+    #[case("Slam Dunk - New Edition v13 (Colored Council) (Viz)", Some(Extract { value: "Viz", text: "(Viz)" }))]
+    #[case("The Hero-Killing Bride - Volume 02 [J-Novel Club] [Premium].epub", Some(Extract { value: "J-Novel Club", text: "[J-Novel Club]"}))]
+    #[case("The Hero-Killing Bride - Volume 02 [J Novels Club] [Premium].epub", Some(Extract { value: "J-Novel Club", text: "[J Novels Club]"}))]
+    #[case("The Summer Hikaru Died v01 [Yen Press] [Stick]", Some(Extract { value: "Yen Press", text: "[Yen Press]" }))]
+    #[case("Ishura v07 [Yen Audio] [Stick].m4b", Some(Extract { value: "Yen Audio", text: "[Yen Audio]" }))]
     #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", None)]
-    fn test_extract_publisher(#[case] input: &str, #[case] expected: Option<Match<&str>>) {
+    fn test_extract_publisher(#[case] input: &str, #[case] expected: Option<Extract<&str>>) {
         assert_eq!(extract_publisher(input), expected);
     }
 
     #[rstest]
-    #[case("Lover Boy v01 (2025) (Digital) (1r0n).cbz", Some(Match { parsed: true, raw: "(Digital)" }))]
-    #[case("Attack on Titan v26 (2018) (digital-SD) [Kodansha].zip", Some(Match { parsed: true, raw: "(digital-SD)" }))]
+    #[case("Lover Boy v01 (2025) (Digital) (1r0n).cbz", Some(Extract { value: true, text: "(Digital)" }))]
+    #[case("Attack on Titan v26 (2018) (digital-SD) [Kodansha].zip", Some(Extract { value: true, text: "(digital-SD)" }))]
     #[case("Dandadan 191 (2025)", None)]
-    fn test_extract_digital(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
+    fn test_extract_digital(#[case] input: &str, #[case] expected: Option<Extract<bool>>) {
         assert_eq!(extract_digital(input), expected);
     }
 
     #[rstest]
-    #[case("5 Centimeters per Second - One More Side - Complete [Vertical][Scans].pdf", Some(Match { parsed: true, raw: "[Scans]" }))]
-    #[case("Alice in the Country of Diamonds - Bet on My Heart - Complete [Seven Seas][Scans_Compressed].pdf", Some(Match { parsed: true, raw: "[Scans_Compressed]" }))]
-    fn test_extract_scan(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
+    #[case("5 Centimeters per Second - One More Side - Complete [Vertical][Scans].pdf", Some(Extract { value: true, text: "[Scans]" }))]
+    #[case("Alice in the Country of Diamonds - Bet on My Heart - Complete [Seven Seas][Scans_Compressed].pdf", Some(Extract { value: true, text: "[Scans_Compressed]" }))]
+    fn test_extract_scan(#[case] input: &str, #[case] expected: Option<Extract<bool>>) {
         assert_eq!(extract_scan(input), expected);
     }
 
     #[rstest]
-    #[case("Trying Out Alchemy After Being Fired as an Adventurer! 001-042 as v01-09 (Digital-Compilation) (Square Enix) (DigitalMangaFan)	", Some(Match { parsed: true, raw: "(Digital-Compilation)" }))]
-    #[case("The Healer Consort 001-010 as v01-02 (Digital-Compilation) (Oak)", Some(Match { parsed: true, raw: "(Digital-Compilation)" }))]
+    #[case("Trying Out Alchemy After Being Fired as an Adventurer! 001-042 as v01-09 (Digital-Compilation) (Square Enix) (DigitalMangaFan)	", Some(Extract { value: true, text: "(Digital-Compilation)" }))]
+    #[case("The Healer Consort 001-010 as v01-02 (Digital-Compilation) (Oak)", Some(Extract { value: true, text: "(Digital-Compilation)" }))]
     fn test_extract_digital_compilation(
         #[case] input: &str,
-        #[case] expected: Option<Match<bool>>,
+        #[case] expected: Option<Extract<bool>>,
     ) {
         assert_eq!(extract_digital_compilation(input), expected);
     }
 
     #[rstest]
-    #[case("Smile Down the Runway v22 (2022) (Digital) (ED).cbz", Some(Match { parsed: true, raw: "(ED)" }))]
+    #[case("Smile Down the Runway v22 (2022) (Digital) (ED).cbz", Some(Extract { value: true, text: "(ED)" }))]
     #[case("Kill the Villainess 001 (2021) (Digital) (1r0n).cbz", None)]
-    fn test_extract_edited(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
+    fn test_extract_edited(#[case] input: &str, #[case] expected: Option<Extract<bool>>) {
         assert_eq!(extract_edited(input), expected);
     }
 
     #[rstest]
-    #[case("Natsume & Natsume v04 (2023) (Digital) (1r0n) (PRE)", Some(Match { parsed: true, raw: "(PRE)" }))]
-    #[case("The Otome Heroine's Fight for Survival v05 Prepub.epub", Some(Match { parsed: true, raw: "Prepub" }))]
-    fn test_extract_pre(#[case] input: &str, #[case] expected: Option<Match<bool>>) {
+    #[case("Natsume & Natsume v04 (2023) (Digital) (1r0n) (PRE)", Some(Extract { value: true, text: "(PRE)" }))]
+    #[case("The Otome Heroine's Fight for Survival v05 Prepub.epub", Some(Extract { value: true, text: "Prepub" }))]
+    fn test_extract_pre(#[case] input: &str, #[case] expected: Option<Extract<bool>>) {
         assert_eq!(extract_pre(input), expected);
     }
 
     #[rstest]
-    #[case("The Eminence in Shadow v01 (2021) (Digital) (1r0n).cbz", Some(Match { parsed: "1".to_string(), raw: "v01" }))]
-    #[case("The Eminence in Shadow v12.5 (2025) (Digital) (1r0n).cbz", Some(Match { parsed: "12.5".to_string(), raw: "v12.5" }))]
-    #[case("The Death Mage v01-02 (2023-2025) (Digital) (DigitalMangaFan)", Some(Match { parsed: "1-2".to_string(), raw: "v01-02" }))]
-    #[case("The Death Mage v01-02.25 (2023-2025) (Digital) (DigitalMangaFan)", Some(Match { parsed: "1-2.25".to_string(), raw: "v01-02.25" }))]
-    #[case("The Banished Saint's Pilgrimage: From Dying to Thriving 001-010 as v01-02 (Digital-Compilation) (Oak)", Some(Match { parsed: "1-2".to_string(), raw: "001-010 as v01-02" }))]
-    #[case("Programmed for Heartbreak: Sartain in Love 001-029 as v01-04 (Digital-Compilation) (Oak)", Some(Match { parsed: "1-4".to_string(), raw: "001-029 as v01-04" }))]
-    #[case("Programmed for Heartbreak: Sartain in Love 001-029 as v01.24-04.24 (Digital-Compilation) (Oak)", Some(Match { parsed: "1.24-4.24".to_string(), raw: "001-029 as v01.24-04.24" }))]
-    #[case("The Otome Heroine's Fight for Survival Volume 05 PREPUB [10/14]", Some(Match { parsed: "5".to_string(), raw: "Volume 05" }))]
-    #[case("The Hero and the Sage, Reincarnated and Engaged - Volume 04 [J-Novel Club]", Some(Match { parsed: "4".to_string(), raw: "Volume 04" }))]
-    #[case("Three Cheats from Three Goddesses: The Broke Baron’s Youngest Wants a Relaxing Life - Volume 01 [J-Novel Club]", Some(Match { parsed: "1".to_string(), raw: "Volume 01" }))]
-    #[case("Veil - Vol 1 [We Need More Yankiis]", Some(Match { parsed: "1".to_string(), raw: "Vol 1" }))]
-    #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", Some(Match { parsed: "26".to_string(), raw: "Vol.26" }))]
-    #[case("fireforce_vol32.pdf", Some(Match { parsed: "32".to_string(), raw: "vol32" }))]
-    fn test_extract_volume(#[case] input: &str, #[case] expected: Option<Match<String>>) {
+    #[case("The Eminence in Shadow v01 (2021) (Digital) (1r0n).cbz", Some(Extract { value: "1".to_string(), text: "v01" }))]
+    #[case("The Eminence in Shadow v12.5 (2025) (Digital) (1r0n).cbz", Some(Extract { value: "12.5".to_string(), text: "v12.5" }))]
+    #[case("The Death Mage v01-02 (2023-2025) (Digital) (DigitalMangaFan)", Some(Extract { value: "1-2".to_string(), text: "v01-02" }))]
+    #[case("The Death Mage v01-02.25 (2023-2025) (Digital) (DigitalMangaFan)", Some(Extract { value: "1-2.25".to_string(), text: "v01-02.25" }))]
+    #[case("The Banished Saint's Pilgrimage: From Dying to Thriving 001-010 as v01-02 (Digital-Compilation) (Oak)", Some(Extract { value: "1-2".to_string(), text: "001-010 as v01-02" }))]
+    #[case("Programmed for Heartbreak: Sartain in Love 001-029 as v01-04 (Digital-Compilation) (Oak)", Some(Extract { value: "1-4".to_string(), text: "001-029 as v01-04" }))]
+    #[case("Programmed for Heartbreak: Sartain in Love 001-029 as v01.24-04.24 (Digital-Compilation) (Oak)", Some(Extract { value: "1.24-4.24".to_string(), text: "001-029 as v01.24-04.24" }))]
+    #[case("The Otome Heroine's Fight for Survival Volume 05 PREPUB [10/14]", Some(Extract { value: "5".to_string(), text: "Volume 05" }))]
+    #[case("The Hero and the Sage, Reincarnated and Engaged - Volume 04 [J-Novel Club]", Some(Extract { value: "4".to_string(), text: "Volume 04" }))]
+    #[case("Three Cheats from Three Goddesses: The Broke Baron’s Youngest Wants a Relaxing Life - Volume 01 [J-Novel Club]", Some(Extract { value: "1".to_string(), text: "Volume 01" }))]
+    #[case("Veil - Vol 1 [We Need More Yankiis]", Some(Extract { value: "1".to_string(), text: "Vol 1" }))]
+    #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", Some(Extract { value: "26".to_string(), text: "Vol.26" }))]
+    #[case("fireforce_vol32.pdf", Some(Extract { value: "32".to_string(), text: "vol32" }))]
+    fn test_extract_volume(#[case] input: &str, #[case] expected: Option<Extract<String>>) {
         assert_eq!(extract_volume(input), expected);
     }
 
     #[rstest]
-    #[case("2.5 Dimensional Seduction 185.1 (2025) (Digital) (Rillant).cbz", Some(Match { parsed: "185.1".to_string(), raw: "185.1" }))]
-    #[case("Sakamoto Days 210 (2025) (Digital) (Rillant).cbz", Some(Match { parsed: "210".to_string(), raw: "210" }))]
-    #[case("I'm a Curse Crafter, and I Don't Need an S-Rank Party! 042.2 (2025) (Digital) (Valdearg).cbz", Some(Match { parsed: "42.2".to_string(), raw: "042.2" }))]
-    #[case("The Case Study of Vanitas 063 (2024) (Digital) (LuCaZ).cbz", Some(Match { parsed: "63".to_string(), raw: "063" }))]
-    #[case("Hyeonjung's Residence c57 (Void).cbz", Some(Match { parsed: "57".to_string(), raw: "c57" }))]
-    #[case("The Crow's Prince c095 - Season 2 Finale (2022) (Digital) (Dalte).cbz", Some(Match { parsed: "95".to_string(), raw: "c095 - Season 2 Finale" }))]
-    #[case("They ridiculed me for my luckless job, but it's not actually that bad 002 - Of Course it's Weird! (2022) (Digital) (AntsyLich)", Some(Match { parsed: "2".to_string(), raw: "002 - Of Course it's Weird!" }))]
-    #[case("Edens Zero v01-31, 276-293 (2018-2025) (Digital) (danke-Empire, DeadMan, SlikkyOak)", Some(Match { parsed: "276-293".to_string(), raw: ", 276-293" }))]
-    #[case("Wistoria - Wand and Sword v01-08 + 033-051 (2022-2025) (Digital) (1r0n)", Some(Match { parsed: "33-51".to_string(), raw: "+ 033-051" }))]
-    #[case("Merin the Mermaid - 00 - Prologue (Digital) (Cobalt001)", Some(Match { parsed: "0".to_string(), raw: "00 - Prologue" }))]
-    fn test_extract_chapter(#[case] input: &str, #[case] expected: Option<Match<String>>) {
+    #[case("2.5 Dimensional Seduction 185.1 (2025) (Digital) (Rillant).cbz", Some(Extract { value: "185.1".to_string(), text: "185.1" }))]
+    #[case("Sakamoto Days 210 (2025) (Digital) (Rillant).cbz", Some(Extract { value: "210".to_string(), text: "210" }))]
+    #[case("I'm a Curse Crafter, and I Don't Need an S-Rank Party! 042.2 (2025) (Digital) (Valdearg).cbz", Some(Extract { value: "42.2".to_string(), text: "042.2" }))]
+    #[case("The Case Study of Vanitas 063 (2024) (Digital) (LuCaZ).cbz", Some(Extract { value: "63".to_string(), text: "063" }))]
+    #[case("Hyeonjung's Residence c57 (Void).cbz", Some(Extract { value: "57".to_string(), text: "c57" }))]
+    #[case("The Crow's Prince c095 - Season 2 Finale (2022) (Digital) (Dalte).cbz", Some(Extract { value: "95".to_string(), text: "c095 - Season 2 Finale" }))]
+    #[case("They ridiculed me for my luckless job, but it's not actually that bad 002 - Of Course it's Weird! (2022) (Digital) (AntsyLich)", Some(Extract { value: "2".to_string(), text: "002 - Of Course it's Weird!" }))]
+    #[case("Edens Zero v01-31, 276-293 (2018-2025) (Digital) (danke-Empire, DeadMan, SlikkyOak)", Some(Extract { value: "276-293".to_string(), text: ", 276-293" }))]
+    #[case("Wistoria - Wand and Sword v01-08 + 033-051 (2022-2025) (Digital) (1r0n)", Some(Extract { value: "33-51".to_string(), text: "+ 033-051" }))]
+    #[case("Merin the Mermaid - 00 - Prologue (Digital) (Cobalt001)", Some(Extract { value: "0".to_string(), text: "00 - Prologue" }))]
+    fn test_extract_chapter(#[case] input: &str, #[case] expected: Option<Extract<String>>) {
         assert_eq!(extract_chapter(input), expected);
     }
 
     #[rstest]
-    #[case("[Unpaid Ferryman] Gamaran: Shura v01-31 (2022-2025) (Digital) (danke-Empire, Kaos, Rillant)", Some(Match { parsed: 2022, raw: "(2022-2025)" }))]
-    #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", Some(Match { parsed: 2025, raw: "(2025)" }))]
-    #[case("The Eminence in Shadow v01-12 (2021-2025) (Digital) (1r0n)", Some(Match { parsed: 2021, raw: "(2021-2025)" }))]
-    fn test_extract_year(#[case] input: &str, #[case] expected: Option<Match<u16>>) {
+    #[case("[Unpaid Ferryman] Gamaran: Shura v01-31 (2022-2025) (Digital) (danke-Empire, Kaos, Rillant)", Some(Extract { value: 2022, text: "(2022-2025)" }))]
+    #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", Some(Extract { value: 2025, text: "(2025)" }))]
+    #[case("The Eminence in Shadow v01-12 (2021-2025) (Digital) (1r0n)", Some(Extract { value: 2021, text: "(2021-2025)" }))]
+    fn test_extract_year(#[case] input: &str, #[case] expected: Option<Extract<u16>>) {
         assert_eq!(extract_year(input), expected);
     }
 
     #[rstest]
-    #[case("One-Punch Man 193 (2024) (Digital) (Rillant) (f).cbz", Some(Match { parsed: 2, raw: "(f)" }))]
-    #[case("One-Punch Man 193 (2024) (Digital) (Rillant) {f2}.cbz", Some(Match { parsed: 4, raw: "{f2}" }))]
-    #[case("The Beginning After the End, Vol. 11 [PZG] {r2}.m4b", Some(Match { parsed: 4, raw: "{r2}" }))]
+    #[case("One-Punch Man 193 (2024) (Digital) (Rillant) (f).cbz", Some(Extract { value: 2, text: "(f)" }))]
+    #[case("One-Punch Man 193 (2024) (Digital) (Rillant) {f2}.cbz", Some(Extract { value: 4, text: "{f2}" }))]
+    #[case("The Beginning After the End, Vol. 11 [PZG] {r2}.m4b", Some(Extract { value: 4, text: "{r2}" }))]
     #[case("The Healer Consort 001-010 (2025) (Digital) (Oak)", None)]
-    fn test_extract_revision(#[case] input: &str, #[case] expected: Option<Match<u8>>) {
+    fn test_extract_revision(#[case] input: &str, #[case] expected: Option<Extract<u8>>) {
         assert_eq!(extract_revision(input), expected);
     }
 
     #[rstest]
-    #[case("Uzumaki (2018) (Digital) (Deluxe Edition 3-in-1) (Mr. Kimiko-Teikō) (ED).cbz", Some(Match { parsed: "Deluxe Edition 3-in-1", raw: "(Deluxe Edition 3-in-1)" }))]
-    #[case("Yokohama Kaidashi Kikou - Deluxe Edition (2022-2024) (Digital) (1r0n).cbz", Some(Match { parsed: "Deluxe Edition", raw: "Deluxe Edition" }))]
-    #[case("Adults' Picture Book - New Edition v01-02 (2024) (Digital) (LuCaZ).cbz", Some(Match { parsed: "New Edition", raw: "New Edition" }))]
-    #[case("Gravitation - Collector's Edition v01 (2024) (Digital) (LuCaZ).cbz", Some(Match { parsed: "Collector's Edition", raw: "Collector's Edition" }))]
-    #[case("My Name Is Shingo - The Perfect Edition v01-02 (2024) (Digital) (1r0n).cbz", Some(Match { parsed: "The Perfect Edition", raw: "The Perfect Edition" }))]
-    #[case("86--EIGHTY-SIX - Operation High School (2024) (Omnibus Edition) (Digital) (1r0n).cbz", Some(Match { parsed: "Omnibus Edition", raw: "(Omnibus Edition)" }))]
-    #[case("86--EIGHTY-SIX - Operation High School (2024) (Collector's Edition) (Digital) (1r0n).cbz", Some(Match { parsed: "Collector's Edition", raw: "(Collector's Edition)" }))]
-    #[case("Zatch Bell! Revamped Edition v01 (2018 E-Book) (Zatch Bell Makai Scanlations)", Some(Match { parsed: "Revamped Edition", raw: "Revamped Edition" }))]
-    #[case("Hellsing v01-03 (2023-2024) (Second Edition) (Digital) (LuCaZ)", Some(Match { parsed: "Second Edition", raw: "(Second Edition)" }))]
-    #[case("Magic Knight Rayearth 2 {25th Anniversary Edition} (2020) (Digital) (XRA-Empire)", Some(Match { parsed: "25th Anniversary Edition", raw: "{25th Anniversary Edition}" }))]
-    #[case("Gunsmith Cats - Revised Edition (2007) (Digital) (XRA-Empire)", Some(Match { parsed: "Revised Edition", raw: "Revised Edition" }))]
-    #[case("Tekkonkinkreet - Black & White 30th Anniversary Edition (2023) (Digital) (1r0n)", Some(Match { parsed: "Black & White 30th Anniversary Edition", raw: "Black & White 30th Anniversary Edition" }))]
-    #[case("Tekkonkinkreet - (Black & White 30th Anniversary Edition) (2023) (Digital) (1r0n)", Some(Match { parsed: "Black & White 30th Anniversary Edition", raw: "(Black & White 30th Anniversary Edition)" }))]
-    fn test_extract_edition(#[case] input: &str, #[case] expected: Option<Match<&str>>) {
+    #[case("Uzumaki (2018) (Digital) (Deluxe Edition 3-in-1) (Mr. Kimiko-Teikō) (ED).cbz", Some(Extract { value: "Deluxe Edition 3-in-1", text: "(Deluxe Edition 3-in-1)" }))]
+    #[case("Yokohama Kaidashi Kikou - Deluxe Edition (2022-2024) (Digital) (1r0n).cbz", Some(Extract { value: "Deluxe Edition", text: "Deluxe Edition" }))]
+    #[case("Adults' Picture Book - New Edition v01-02 (2024) (Digital) (LuCaZ).cbz", Some(Extract { value: "New Edition", text: "New Edition" }))]
+    #[case("Gravitation - Collector's Edition v01 (2024) (Digital) (LuCaZ).cbz", Some(Extract { value: "Collector's Edition", text: "Collector's Edition" }))]
+    #[case("My Name Is Shingo - The Perfect Edition v01-02 (2024) (Digital) (1r0n).cbz", Some(Extract { value: "The Perfect Edition", text: "The Perfect Edition" }))]
+    #[case("86--EIGHTY-SIX - Operation High School (2024) (Omnibus Edition) (Digital) (1r0n).cbz", Some(Extract { value: "Omnibus Edition", text: "(Omnibus Edition)" }))]
+    #[case("86--EIGHTY-SIX - Operation High School (2024) (Collector's Edition) (Digital) (1r0n).cbz", Some(Extract { value: "Collector's Edition", text: "(Collector's Edition)" }))]
+    #[case("Zatch Bell! Revamped Edition v01 (2018 E-Book) (Zatch Bell Makai Scanlations)", Some(Extract { value: "Revamped Edition", text: "Revamped Edition" }))]
+    #[case("Hellsing v01-03 (2023-2024) (Second Edition) (Digital) (LuCaZ)", Some(Extract { value: "Second Edition", text: "(Second Edition)" }))]
+    #[case("Magic Knight Rayearth 2 {25th Anniversary Edition} (2020) (Digital) (XRA-Empire)", Some(Extract { value: "25th Anniversary Edition", text: "{25th Anniversary Edition}" }))]
+    #[case("Gunsmith Cats - Revised Edition (2007) (Digital) (XRA-Empire)", Some(Extract { value: "Revised Edition", text: "Revised Edition" }))]
+    #[case("Tekkonkinkreet - Black & White 30th Anniversary Edition (2023) (Digital) (1r0n)", Some(Extract { value: "Black & White 30th Anniversary Edition", text: "Black & White 30th Anniversary Edition" }))]
+    #[case("Tekkonkinkreet - (Black & White 30th Anniversary Edition) (2023) (Digital) (1r0n)", Some(Extract { value: "Black & White 30th Anniversary Edition", text: "(Black & White 30th Anniversary Edition)" }))]
+    fn test_extract_edition(#[case] input: &str, #[case] expected: Option<Extract<&str>>) {
         assert_eq!(extract_edition(input), expected);
     }
 
     #[rstest]
-    #[case("Lover Boy v01 (2025) (Digital) (1r0n)", Some(Match { parsed: "1r0n", raw: "(1r0n)" }))]
-    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Match { parsed: "Stick", raw: "[Stick]" }))]
-    fn test_extract_group(#[case] input: &str, #[case] expected: Option<Match<&str>>) {
+    #[case("Lover Boy v01 (2025) (Digital) (1r0n)", Some(Extract { value: "1r0n", text: "(1r0n)" }))]
+    #[case("Witch and Mercenary v02 [Audiobook] [Seven Seas Siren] [Stick]", Some(Extract { value: "Stick", text: "[Stick]" }))]
+    fn test_extract_group(#[case] input: &str, #[case] expected: Option<Extract<&str>>) {
         assert_eq!(extract_group(input), expected);
     }
 
