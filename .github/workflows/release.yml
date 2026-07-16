@@ -36,36 +36,6 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./wheelhouse/*.whl
-
-  build_abi3_wheels:
-    name: Build abi3 wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: false
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
-        env:
-          CIBW_BUILD: cp39-*
-          CIBW_CONFIG_SETTINGS: build-args="--features abi3"
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
           name: cibw-abi3-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
@@ -90,7 +60,7 @@ jobs:
   
   publish:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    needs: [build_wheels, build_abi3_wheels, build_sdist]
+    needs: [build_wheels, build_sdist]
     environment: pypi
     permissions:
       id-token: write # https://docs.pypi.org/trusted-publishers/using-a-publisher/#github-actions
@@ -126,10 +96,9 @@ jobs:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
 
-
     - name: Create Release
       shell: bash
-      run: gh release create "${GH_REF_NAME}" -F "CHANGELOG.md" --fail-on-no-commits
+      run: gh release create "${GH_REF_NAME}" -F "CHANGELOG.md"
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REF_NAME: ${{ github.ref_name }}
