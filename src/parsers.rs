@@ -60,10 +60,7 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Extract<'_, &str>> {
 
     // Check for Viz Media pattern with brackets
     if let Some(text) = regex_find!(r#"[{(\[]\s*(Viz\s*(Media)?)\s*[\])}]"#i, s) {
-        return Some(Extract {
-            value: "Viz",
-            text,
-        });
+        return Some(Extract { value: "Viz", text });
     }
 
     // Check for J-Novel Club pattern with brackets
@@ -115,42 +112,28 @@ pub(crate) fn extract_publisher(s: &str) -> Option<Extract<'_, &str>> {
 
 /// Extracts a "PRE" marker.
 pub(crate) fn extract_pre(s: &str) -> Option<Extract<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*PRE\s*[\])}]|PREPUB"#i, s).map(|text| Extract {
-        value: true,
-        text,
-    })
+    regex_find!(r#"[{(\[]\s*PRE\s*[\])}]|PREPUB"#i, s).map(|text| Extract { value: true, text })
 }
 
 /// Extracts a "Digital" marker.
 pub(crate) fn extract_digital(s: &str) -> Option<Extract<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(digital.*?)\s*[\])}]"#i, s).map(|text| Extract {
-        value: true,
-        text,
-    })
+    regex_find!(r#"[{(\[]\s*(digital.*?)\s*[\])}]"#i, s).map(|text| Extract { value: true, text })
 }
 
 /// Extracts a "Scan" marker.
 pub(crate) fn extract_scan(s: &str) -> Option<Extract<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(scan.*?)\s*[\])}]"#i, s).map(|text| Extract {
-        value: true,
-        text,
-    })
+    regex_find!(r#"[{(\[]\s*(scan.*?)\s*[\])}]"#i, s).map(|text| Extract { value: true, text })
 }
 
 /// Extracts a "Digital-Compilation" marker.
 pub(crate) fn extract_digital_compilation(s: &str) -> Option<Extract<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(Digital-Compilation)\s*[\])}]"#i, s).map(|text| Extract {
-        value: true,
-        text,
-    })
+    regex_find!(r#"[{(\[]\s*(Digital-Compilation)\s*[\])}]"#i, s)
+        .map(|text| Extract { value: true, text })
 }
 
 /// Extracts an "ED" marker.
 pub(crate) fn extract_edited(s: &str) -> Option<Extract<'_, bool>> {
-    regex_find!(r#"[{(\[]\s*(ed)\s*[\])}]"#i, s).map(|text| Extract {
-        value: true,
-        text,
-    })
+    regex_find!(r#"[{(\[]\s*(ed)\s*[\])}]"#i, s).map(|text| Extract { value: true, text })
 }
 
 /// Extracts the volume number.
@@ -165,11 +148,11 @@ pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
     // Group 4: `(-(\d+(\.\d+)?))?` - Optional range part starting with '-'.
     // Group 5: `(\d+(\.\d+)?)` - Matches the second volume number in a range (e.g., "02", "02.25", "04.24").
     // Group 6: `(\.\d+)?` - Optional decimal part of the second number.
-    // The function uses the full match (Group 0) for `text`, Group 2 for `start`, and Group 5 for `end`.
-    // https://regex101.com/r/LJJ0H0/1
-    if let Some((text, _, start, _, _, end, _)) =
-        regex_captures!(r#"(\d+-\d+\sas\s)?v(\d+(\.\d+)?)(-(\d+(\.\d+)?))?"#i, &s)
-    {
+    // Group 7: `(\s+-[^\{\[\(\)\]\}\.]*)` - Optional whitespace separator followed by the volume title text (e.g., " - The Beginning").
+    if let Some((text, _, start, _, _, end, _, _)) = regex_captures!(
+        r#"(\d+-\d+\sas\s)?v(\d+(\.\d+)?)(-(\d+(\.\d+)?))?(\s+-[^\{\[\(\)\]\}\.]*)?"#i,
+        &s
+    ) {
         // Trim leading zeroes
         let trimmed_start = start.trim_start_matches('0');
         let trimmed_end = end.trim_start_matches('0');
@@ -177,7 +160,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
         if trimmed_start.is_empty() {
             // If the trimmed start is empty (meaning the original captured 'start'
             // consisted only of zeros, e.g., "0", "00"), default the parsed volume to "0".
-            vol = 0.to_string();
+            vol.push('0');
         } else {
             vol.push_str(trimmed_start);
             if !trimmed_end.is_empty() {
@@ -188,7 +171,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
 
         return Some(Extract {
             value: vol,
-            text,
+            text: text.trim(),
         });
 
     // Second regex attempts to match alternate spellings like "Vol. 1", "Volume 02", "Vol 26".
@@ -196,9 +179,11 @@ pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
     // `Vol(?:ume)?` - Matches "Vol" or "Volume".
     // `(?:[\.\s]+)?` - Matches one or more periods or whitespace characters.
     // Group 1: `(\d+)` - Matches the volume number.
-    // The function uses the full match (Group 0) for `text` and Group 1 for `vol`.
-    // https://regex101.com/r/8FsUfE/1
-    } else if let Some((text, vol)) = regex_captures!(r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)"#i, &s) {
+    // Group 2: `(\s+-[^\{\[\(\)\]\}\.]*)` - Optional whitespace separator followed by the volume title text (e.g., " - The Beginning").
+    } else if let Some((text, vol, _)) = regex_captures!(
+        r#"Vol(?:ume)?(?:[\.\s]+)?(\d+)(\s+-[^\{\[\(\)\]\}\.]*)?"#i,
+        &s
+    ) {
         let vol = vol.trim_start_matches('0');
         let parsed = if vol.is_empty() {
             // If the trimmed start is empty (meaning the original captured 'start'
@@ -209,7 +194,7 @@ pub(crate) fn extract_volume(s: &str) -> Option<Extract<'_, String>> {
         };
         return Some(Extract {
             value: parsed,
-            text,
+            text: text.trim(),
         });
     }
     None
@@ -224,12 +209,9 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Extract<'_, String>> {
     // Group 4: `(-(\d\d+(\.\d+)?))?` - Optional range part starting with '-'.
     // Group 5: `(\d\d+(\.\d+)?)` - The second chapter number in a range. Requires at least two digits.
     // Group 6: `(\.\d+)?` - Optional decimal part of the second number.
-    // `\s` - Matches the space after the number or range.
-    // Group 7: `(-[^\{\[\(\)\]\}]*)?` - Optional chapter title.
-    // The function uses the full match (Group 0) for `text`, Group 2 for `start`, and Group 5 for `end`.
-    // https://regex101.com/r/gVNakD/1
+    // Group 7: `(\s+-[^\{\[\(\)\]\}\.]*)` - Optional whitespace separator followed by the chapter title text (e.g., " - The Beginning").
     if let Some((text, _, start, _, _, end, _, _)) = regex_captures!(
-        r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?\s(-[^\{\[\(\)\]\}]*)?"#i,
+        r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?(\s+-[^\{\[\(\)\]\}\.]*)?"#i,
         &s
     ) {
         let trimmed_start = start.trim_start_matches('0');
@@ -259,10 +241,10 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Extract<'_, String>> {
 pub(crate) fn extract_year(s: &str) -> Option<Extract<'_, u16>> {
     regex_captures!(r#"[{(\[]\s*(\d{4})(-\d{4})?\s*[\])}]"#i, s).and_then(
         |(text, start_year, _)| {
-            start_year.parse::<u16>().ok().map(|year| Extract {
-                value: year,
-                text,
-            })
+            start_year
+                .parse::<u16>()
+                .ok()
+                .map(|year| Extract { value: year, text })
         },
     )
 }
@@ -356,10 +338,7 @@ pub(crate) fn extract_group(s: &str) -> Option<Extract<'_, &str>> {
     regex_captures!(r#"[\{\[\(]([^\{\[\(\)\]\}\/\\]*)[\)\]\}]$"#i, s.trim())
         .map(|(text, group)| (text, group.trim()))
         .filter(|(_, group)| !group.is_empty())
-        .map(|(text, group)| Extract {
-            value: group,
-            text,
-        })
+        .map(|(text, group)| Extract { value: group, text })
 }
 
 /// Cleanup whatever's left after all the processing.
@@ -471,6 +450,8 @@ mod tests {
     #[case("Veil - Vol 1 [We Need More Yankiis]", Some(Extract { value: "1".to_string(), text: "Vol 1" }))]
     #[case("Youjo Senki | The Saga of Tanya the Evil Vol.26", Some(Extract { value: "26".to_string(), text: "Vol.26" }))]
     #[case("fireforce_vol32.pdf", Some(Extract { value: "32".to_string(), text: "vol32" }))]
+    #[case("Overlord v01 - The Undead King [Yen Press] [LuCaZ] {r3}.epub", Some(Extract { value: "1".to_string(), text: "v01 - The Undead King" }))]
+    #[case("Boogiepop - Volume 01 - Boogiepop and Others.epub", Some(Extract { value: "1".to_string(), text: "Volume 01 - Boogiepop and Others" }))]
     fn test_extract_volume(#[case] input: &str, #[case] expected: Option<Extract<String>>) {
         assert_eq!(extract_volume(input), expected);
     }

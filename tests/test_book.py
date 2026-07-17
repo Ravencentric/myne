@@ -819,6 +819,29 @@ def test_constants() -> None:
                 extension="pdf",
             ),
         ),
+        (
+            "Overlord v01 - The Undead King [Yen Press] [LuCaZ] {r3}.epub",
+            Book(
+                title="Overlord",
+                revision=5,
+                volume="1",
+                group="LuCaZ",
+                extension="epub",
+                publisher="Yen Press",
+            ),
+        ),
+        (
+            # This file is incorrectly named.
+            # "Boogiepop" is the franchise title, this volume is actually
+            # "Boogiepop and Others". Because of the incorrect filename,
+            # the parsed title is also wrong.
+            #
+            # This isn't something we can fix automatically.
+            # https://anilist.co/manga/31315/Boogiepop-wa-Warawanai/
+            # https://sevenseasentertainment.com/books/boogiepop-and-others-novel-1/
+            "Boogiepop - Volume 01 - Boogiepop and Others.epub",
+            Book(title="Boogiepop", volume="1", extension="epub"),
+        ),
     ],
 )
 def test_book(filename: str, expected: Book) -> None:
