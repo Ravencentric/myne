@@ -217,13 +217,11 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Extract<'_, String>> {
         // Don't treat numbers that follow "Part" as chapter numbers.
         // Titles like "Ascendance of a Bookworm Part 01" include a number
         // that is part of the title, not a chapter indicator.
-        if let Some(pos) = s.find(text) {
-            if let Some(last_word) = s[..pos].trim_end().split_whitespace().last() {
-                if last_word.eq_ignore_ascii_case("Part") {
+        if let Some(pos) = s.find(text)
+            && let Some(last_word) = s[..pos].split_whitespace().last()
+                && last_word.eq_ignore_ascii_case("Part") {
                     return None;
                 }
-            }
-        }
 
         let trimmed_start = start.trim_start_matches('0');
         let trimmed_end = end.trim_start_matches('0');
