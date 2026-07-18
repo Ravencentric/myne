@@ -831,6 +831,16 @@ def test_constants() -> None:
             ),
         ),
         (
+            "Ascendance of a Bookworm Part 01 - v01 (J-Novel Club) (Premium).epub",
+            Book(
+                title="Ascendance of a Bookworm Part 01",
+                volume="1",
+                publisher="J-Novel Club",
+                edition="Premium",
+                extension="epub",
+            ),
+        ),
+        (
             # This file is incorrectly named.
             # "Boogiepop" is the franchise title, this volume is actually
             # "Boogiepop and Others". Because of the incorrect filename,

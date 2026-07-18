@@ -214,6 +214,17 @@ pub(crate) fn extract_chapter(s: &str) -> Option<Extract<'_, String>> {
         r#"(\s|\bc|[,\+]\s)(\d\d+(\.\d+)?)(-(\d\d+(\.\d+)?))?(\s+-[^\{\[\(\)\]\}\.]*)?"#i,
         &s
     ) {
+        // Don't treat numbers that follow "Part" as chapter numbers.
+        // Titles like "Ascendance of a Bookworm Part 01" include a number
+        // that is part of the title, not a chapter indicator.
+        if let Some(pos) = s.find(text) {
+            if let Some(last_word) = s[..pos].trim_end().split_whitespace().last() {
+                if last_word.eq_ignore_ascii_case("Part") {
+                    return None;
+                }
+            }
+        }
+
         let trimmed_start = start.trim_start_matches('0');
         let trimmed_end = end.trim_start_matches('0');
         let mut chapter = String::new();
@@ -467,6 +478,7 @@ mod tests {
     #[case("Edens Zero v01-31, 276-293 (2018-2025) (Digital) (danke-Empire, DeadMan, SlikkyOak)", Some(Extract { value: "276-293".to_string(), text: ", 276-293" }))]
     #[case("Wistoria - Wand and Sword v01-08 + 033-051 (2022-2025) (Digital) (1r0n)", Some(Extract { value: "33-51".to_string(), text: "+ 033-051" }))]
     #[case("Merin the Mermaid - 00 - Prologue (Digital) (Cobalt001)", Some(Extract { value: "0".to_string(), text: "00 - Prologue" }))]
+    #[case("Ascendance of a Bookworm Part 01", None)]
     fn test_extract_chapter(#[case] input: &str, #[case] expected: Option<Extract<String>>) {
         assert_eq!(extract_chapter(input), expected);
     }
